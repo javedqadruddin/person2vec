@@ -22,7 +22,9 @@ api = tweepy.API(auth)
 
 public_tweets = api.user_timeline(id="realDonaldTrump", count=100, page=sys.argv[1])
 
-with open('trump_test.txt', 'w') as f:
-    for tweet in public_tweets:
-        print(tweet.text)
-        f.write(u' '.join(tweet.text).encode('utf-8'))
+print(public_tweets[0])
+
+# with open('trump_test.txt', 'w') as f:
+#     for tweet in public_tweets:
+#         print(tweet.text)
+#         f.write(u' '.join(tweet.text).encode('utf-8'))
