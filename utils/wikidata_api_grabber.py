@@ -73,6 +73,7 @@ def _get_person_attributes(person_dict):
 def _check_if_right_person(person_dict, target_name):
     try:
         retrieved_name = person_dict['labels']['en']['value']
+        description = [person_dict['descriptions']['en']['value']]
     except:
         print("Data in wrong form for " + target_name)
         return False
@@ -96,7 +97,7 @@ def _write_to_csv(rows):
 
 def main():
     rows_to_write = []
-    with open(path.join(DATA_DIR, "people_short.csv"), 'rb') as people_file:
+    with open(path.join(DATA_DIR, "people.csv"), 'rb') as people_file:
         people_reader = csv.reader(people_file)
 
         attempt_counter = 0
@@ -108,6 +109,12 @@ def main():
             person_name = row[0]
             person_occupation = row[1]
             print("Trying " + person_name + " person number: " + str(attempt_counter))
+            try:
+                person_name = person_name.encode('utf-8')
+            except:
+                print("Failed utf-8 encoding")
+                fail_counter += 1
+                continue
 
             try:
                 person_wikidata = _get_wikidata_title(person_name)
@@ -130,9 +137,17 @@ def main():
                 person_attributes = [person_name, person_occupation]
                 person_attributes = person_attributes + _get_person_attributes(first_entity)
                 rows_to_write.append(person_attributes)
+                success_counter += 1
 
-    print(rows_to_write)
     _write_to_csv(rows_to_write)
+
+    print(str(attempt_counter) + " attempts made")
+    print(str(fail_counter) + " entities failed")
+    print(str(success_counter) + " entities succeeded")
+    if fail_counter + success_counter == attempt_counter:
+        print("Fails and successes added up to attempts.. Good")
+    else:
+        print("Fails and successes didn't add up to attempts.. something fishy")
 
 
 
