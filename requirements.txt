@@ -1,0 +1,7 @@
+pymongo
+gensim
+pandas
+numpy
+scikitlearn
+tensorflow
+keras
