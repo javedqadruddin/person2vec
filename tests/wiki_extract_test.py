@@ -43,3 +43,7 @@ def test_get_person_attributes():
 def test_get_occupation():
     test_entity = setUp()
     assert wiki_extract.get_occupation(test_entity) == 'politician'
+
+# def test_get_article():
+#     r = requests.get(WIKIDATA_TITLE_URL % ('Johnny_Depp'))
+#     assert wiki_extract.get_article(json.loads(r.text)) ==

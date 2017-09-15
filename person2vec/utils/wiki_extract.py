@@ -18,7 +18,11 @@ DECODER = {'citizenship':'P27',
             'actor':'Q33999',
             'Q10800557':'film actor',
             'film actor':'Q10800557',
-            'Q43845':'businessperson'
+            'Q43845':'businessperson',
+            'Q639669':'musician',
+            'musician':'Q639669',
+            'Q177220':'singer',
+            'singer':'Q177220'
             }
 
 
@@ -28,6 +32,11 @@ def id2word(id):
 
 def word2id(word):
     return DECODER[word]
+
+
+def get_article(article_dict):
+    pages = article_dict['query']['pages']
+    return pages[pages.keys()[0]]['extract']
 
 
 def get_instance_of(entity_dict):
@@ -41,8 +50,10 @@ def get_title(entity_dict):
 def get_description(entity_dict):
     return entity_dict['descriptions']['en']['value']
 
+
 def get_gender(entity_dict):
     return id2word([entity_dict['claims'][word2id('gender')][0]['mainsnak']['datavalue']['value']['id']][0])
+
 
 def get_occupation(entity_dict):
     occupations = entity_dict['claims'][word2id('occupation')]
@@ -53,5 +64,7 @@ def get_occupation(entity_dict):
         return 'politician'
     elif word2id('actor') in occ_names or word2id('film actor') in occ_names:
         return 'actor'
+    elif word2id('singer') in occ_names or word2id('musician') in occ_names:
+        return 'musician'
     else:
         return 'businessperson'

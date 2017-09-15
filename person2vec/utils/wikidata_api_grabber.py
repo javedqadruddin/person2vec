@@ -2,6 +2,7 @@ from os import path
 import requests
 import csv
 import json
+import time
 
 import wiki_extract
 from person2vec import data_handler
@@ -10,7 +11,10 @@ HERE = path.abspath(path.dirname(__file__))
 PROJECT_DIR = path.dirname(HERE)
 DATA_DIR = path.join(PROJECT_DIR, 'data')
 
+API_WAIT_TIME = 0.1
+
 WIKIDATA_TITLE_URL = "https://www.wikidata.org/w/api.php?action=wbgetentities&sites=enwiki&titles=%s&format=json"
+WIKIPEDIA_URL = "https://en.wikipedia.org/w/api.php?action=query&format=json&titles=%s&prop=extracts&explaintext"
 
 # wikidata codes for different entities and relationships
 DECODER = {'citizenship':'P27',
@@ -32,7 +36,10 @@ DECODER = {'citizenship':'P27',
             'Q43845':'businessperson'
             }
 
-ATTRIBUTES_TO_GET = ['gender']
+HEADERS = {
+    'User-Agent': 'ML project for describing famous people',
+    'From': 'jqjunk@gmail.com'
+}
 
 # instance of = p31
 # human = q5
@@ -52,11 +59,7 @@ ATTRIBUTES_TO_GET = ['gender']
 # https://en.wikipedia.org/w/api.php?action=query&format=json&titles=Johnny_Depp&prop=extracts&explaintext
 
 def _get_wikidata_title(title):
-    headers = {
-        'User-Agent': 'ML project for describing famous people',
-        'From': 'jqjunk@gmail.com'
-    }
-    r = requests.get(WIKIDATA_TITLE_URL % (title), headers=headers)
+    r = requests.get(WIKIDATA_TITLE_URL % (title), headers=HEADERS)
     return json.loads(r.text)
 
 
@@ -101,6 +104,7 @@ def _write_to_csv(rows):
             print(row)
             csv_writer.writerow(row)
 
+
 def _write_to_db(new_entity):
     handler = data_handler.DataHandler()
     # if entity by that name already exists, remove it
@@ -110,9 +114,15 @@ def _write_to_db(new_entity):
     handler.create_entity(new_entity)
 
 
+def _get_person_article(name):
+    r = requests.get(WIKIPEDIA_URL % (name), headers=HEADERS)
+    article = wiki_extract.get_article(json.loads(r.text))
+    return {"texts":[article]}
+
+
 def main():
     rows_to_write = []
-    with open(path.join(DATA_DIR, "people_short.csv"), 'rb') as people_file:
+    with open(path.join(DATA_DIR, "people.csv"), 'rb') as people_file:
         people_reader = csv.reader(people_file)
 
         attempt_counter = 0
@@ -139,6 +149,13 @@ def main():
                 fail_counter += 1
                 continue
 
+            try:
+                person_article = _get_person_article(person_name)
+            except:
+                print("Failed to get " + person_name + "'s article from wikipedia")
+                fail_counter += 1
+                continue
+
             # get the first entity from the dict that wikidata API returns
             entities_entries = person_wikidata['entities']
             first_entity = entities_entries[entities_entries.keys()[0]]
@@ -152,8 +169,12 @@ def main():
                 person_attributes = {"name":person_name}
                 # adds entries from dict returned by get_person_attributes to the existing dict
                 person_attributes.update(_get_person_attributes(first_entity))
+                person_attributes.update(person_article)
                 _write_to_db(person_attributes)
                 success_counter += 1
+
+            # to prevent hitting the wikipedia API too frequently
+            #time.sleep(API_WAIT_TIME)
 
     #_write_to_csv(rows_to_write)
 

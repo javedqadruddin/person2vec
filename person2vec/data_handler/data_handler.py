@@ -11,10 +11,10 @@ class DataHandler(object):
     def create_entity(self, entry):
         try:
             post_id = self.entities_collection.insert_one(entry).inserted_id
-            print("Successfully inserted into db: " + str(entry))
+            print("Successfully inserted into db")
             return post_id
         except:
-            print("Failed to insert into db: " + str(entry))
+            print("Failed to insert into db")
 
 
     # removes all entities matching query
