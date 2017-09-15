@@ -1,2 +1,2 @@
-import data_handler
-from data_handler import DataHandler
+#import data_handler
+from . import data_handler
