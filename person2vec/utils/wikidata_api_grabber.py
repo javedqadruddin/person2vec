@@ -46,6 +46,7 @@ ATTRIBUTES_TO_GET = ['gender']
 
 # https://www.wikidata.org/w/api.php?action=wbgetentities&sites=enwiki&titles=Hillary%20Clinton&format=json
 # https://www.wikidata.org/w/api.php?action=wbgetentities&sites=enwiki&ids=q30&format=json
+# https://en.wikipedia.org/w/api.php?action=query&format=json&titles=Johnny_Depp&prop=extracts&explaintext
 
 def _get_wikidata_title(title):
     headers = {

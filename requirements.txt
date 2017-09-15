@@ -2,6 +2,6 @@ pymongo
 gensim
 pandas
 numpy
-scikitlearn
+scikit-learn
 tensorflow
 keras
