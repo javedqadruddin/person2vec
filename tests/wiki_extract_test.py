@@ -1,0 +1,35 @@
+import json
+import requests
+
+from person2vec.utils import wiki_extract
+
+
+
+
+def setUp():
+    WIKIDATA_TITLE_URL = "https://www.wikidata.org/w/api.php?action=wbgetentities&sites=enwiki&titles=%s&format=json"
+    headers = {
+        'User-Agent': 'ML project for describing famous people',
+        'From': 'jqjunk@gmail.com'
+    }
+    r = requests.get(WIKIDATA_TITLE_URL % ('Hillary_Clinton'), headers=headers)
+    test_input = json.loads(r.text)
+    entities_entries = test_input['entities']
+    return entities_entries[entities_entries.keys()[0]]
+
+
+def test_get_instance_of():
+    test_entity = setUp()
+    assert wiki_extract.get_instance_of(test_entity) == 'human'
+
+def test_get_title():
+    test_entity = setUp()
+    assert wiki_extract.get_title(test_entity) == 'Hillary Clinton'
+
+def test_get_description():
+    test_entity = setUp()
+    assert wiki_extract.get_description(test_entity) == 'American politician, senator, and U.S. Secretary of State'
+
+def test_get_gender(entity_dict):
+    test_entity = setUp()
+    assert wiki_extract.get_gender(test_entity) == 'female'

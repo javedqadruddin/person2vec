@@ -3,6 +3,8 @@ import requests
 import csv
 import json
 
+import wiki_extract
+
 HERE = path.abspath(path.dirname(__file__))
 PROJECT_DIR = path.dirname(HERE)
 DATA_DIR = path.join(PROJECT_DIR, 'data')
@@ -65,10 +67,13 @@ def _get_claim_entity(person_dict, claim_type):
 
 
 def _get_person_attributes(person_dict):
-    attributes_list = [person_dict['descriptions']['en']['value']]
-    for attribute in ATTRIBUTES_TO_GET:
-        attributes_list.append(_get_claim_entity(person_dict, attribute))
+    attributes_list = []
+    attributes_list.append(wiki_extract.get_description(person_dict))
+    attributes_list.append(wiki_extract.get_gender(person_dict))
     return attributes_list
+    # for attribute in ATTRIBUTES_TO_GET:
+    #     attributes_list.append(_get_claim_entity(person_dict, attribute))
+    # return attributes_list
 
 
 def _check_if_right_person(person_dict, target_name):
@@ -78,8 +83,8 @@ def _check_if_right_person(person_dict, target_name):
     except:
         print("Data in wrong form for " + target_name)
         return False
-    instance_of = person_dict['claims']['P31'][0]['mainsnak']['datavalue']['value']['id']
-    if instance_of != DECODER['human']:
+    instance_of = wiki_extract.get_instance_of(person_dict)
+    if instance_of != 'human':
         print(target_name + " does not appear to be of type human.")
         return False
     elif retrieved_name != target_name:
