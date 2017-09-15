@@ -4,6 +4,7 @@ import csv
 import json
 
 import wiki_extract
+from person2vec import data_handler
 
 HERE = path.abspath(path.dirname(__file__))
 PROJECT_DIR = path.dirname(HERE)
@@ -67,23 +68,23 @@ def _get_claim_entity(person_dict, claim_type):
 
 
 def _get_person_attributes(person_dict):
-    attributes_list = []
-    attributes_list.append(wiki_extract.get_description(person_dict))
-    attributes_list.append(wiki_extract.get_gender(person_dict))
-    return attributes_list
-    # for attribute in ATTRIBUTES_TO_GET:
-    #     attributes_list.append(_get_claim_entity(person_dict, attribute))
-    # return attributes_list
+    attributes_dict = {}
+    attributes_dict.update({"description":wiki_extract.get_description(person_dict)})
+    attributes_dict.update({"gender":wiki_extract.get_gender(person_dict)})
+    attributes_dict.update({"occupation":wiki_extract.get_occupation(person_dict)})
+    return attributes_dict
 
 
 def _check_if_right_person(person_dict, target_name):
     try:
-        retrieved_name = person_dict['labels']['en']['value']
-        description = [person_dict['descriptions']['en']['value']]
+        retrieved_name = wiki_extract.get_title(person_dict)
+        description = wiki_extract.get_description(person_dict)
+        instance_of = wiki_extract.get_instance_of(person_dict)
+        gender = wiki_extract.get_gender(person_dict)
+        occ = wiki_extract.get_occupation(person_dict)
     except:
         print("Data in wrong form for " + target_name)
         return False
-    instance_of = wiki_extract.get_instance_of(person_dict)
     if instance_of != 'human':
         print(target_name + " does not appear to be of type human.")
         return False
@@ -100,10 +101,18 @@ def _write_to_csv(rows):
             print(row)
             csv_writer.writerow(row)
 
+def _write_to_db(new_entity):
+    handler = data_handler.DataHandler()
+    # if entity by that name already exists, remove it
+    if handler.get_entities({"name":new_entity["name"]}):
+        handler.remove_entities({"name":new_entity["name"]})
+    # add the new entity
+    handler.create_entity(new_entity)
+
 
 def main():
     rows_to_write = []
-    with open(path.join(DATA_DIR, "people.csv"), 'rb') as people_file:
+    with open(path.join(DATA_DIR, "people_short.csv"), 'rb') as people_file:
         people_reader = csv.reader(people_file)
 
         attempt_counter = 0
@@ -113,7 +122,7 @@ def main():
         for row in people_reader:
             attempt_counter += 1
             person_name = row[0]
-            person_occupation = row[1]
+            #person_occupation = row[1]
             print("Trying " + person_name + " person number: " + str(attempt_counter))
             try:
                 person_name = person_name.encode('utf-8')
@@ -140,12 +149,13 @@ def main():
             if not is_right_person:
                 fail_counter += 1
             else:
-                person_attributes = [person_name, person_occupation]
-                person_attributes = person_attributes + _get_person_attributes(first_entity)
-                rows_to_write.append(person_attributes)
+                person_attributes = {"name":person_name}
+                # adds entries from dict returned by get_person_attributes to the existing dict
+                person_attributes.update(_get_person_attributes(first_entity))
+                _write_to_db(person_attributes)
                 success_counter += 1
 
-    _write_to_csv(rows_to_write)
+    #_write_to_csv(rows_to_write)
 
     print(str(attempt_counter) + " attempts made")
     print(str(fail_counter) + " entities failed")

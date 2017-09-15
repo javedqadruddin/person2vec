@@ -42,4 +42,16 @@ def get_description(entity_dict):
     return entity_dict['descriptions']['en']['value']
 
 def get_gender(entity_dict):
-    id2word([entity_dict['claims'][word2id('gender')][0]['mainsnak']['datavalue']['value']['id']])
+    return id2word([entity_dict['claims'][word2id('gender')][0]['mainsnak']['datavalue']['value']['id']][0])
+
+def get_occupation(entity_dict):
+    occupations = entity_dict['claims'][word2id('occupation')]
+    occ_names = []
+    for occupation in occupations:
+        occ_names.append(occupation['mainsnak']['datavalue']['value']['id'])
+    if word2id('politician') in occ_names:
+        return 'politician'
+    elif word2id('actor') in occ_names or word2id('film actor') in occ_names:
+        return 'actor'
+    else:
+        return 'businessperson'
