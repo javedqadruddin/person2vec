@@ -5,4 +5,4 @@ clean:
 	find . -name '*.pyc' -delete
 
 install:
-	pip install -e .
+	sudo pip3 install -e .
