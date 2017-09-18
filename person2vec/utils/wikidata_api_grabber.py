@@ -4,7 +4,7 @@ import csv
 import json
 import time
 
-import wiki_extract
+from . import wiki_extract
 from person2vec import data_handler
 
 HERE = path.abspath(path.dirname(__file__))
