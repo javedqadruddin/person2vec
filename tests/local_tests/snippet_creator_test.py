@@ -1,8 +1,6 @@
 from person2vec.utils import snippet_creator
 from person2vec import data_handler
 
-SNIPPET_TEST_STR_SIZE = 16
-
 
 def test_remove_punctuation():
     test_str = "Hello. #$%This (is) a test-string! 99"
