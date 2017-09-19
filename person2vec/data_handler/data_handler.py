@@ -10,6 +10,10 @@ class DataHandler(object):
         self.snippets_collection = self.db.snippets
 
 
+    def get_snippet_index(self):
+        return self.snippets_collection.distinct('_id',{})
+
+
     def create_entity(self, entry):
         try:
             post_id = self.entities_collection.insert_one(entry).inserted_id

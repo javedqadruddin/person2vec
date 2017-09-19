@@ -1,8 +1,6 @@
 # pre-processes data in the database by removing references to a person's name
 # from the snippets about that person and vectorizing the snippets with word2vec
 
-from person2vec import data_handler
-
 def split_names(name):
     names = name.split()
     first_name = names[0]
