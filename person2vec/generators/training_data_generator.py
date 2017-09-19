@@ -48,7 +48,7 @@ class TrainingDataGenerator(object):
         vectors = []
         for word in text.split():
             try:
-                vectors.append(self.word_vectors(word))
+                vectors.append(self.word_vectors.word_vec(word))
             except:
                 vectors.append(np.zeros(self.word_vec_size))
         return vectors
