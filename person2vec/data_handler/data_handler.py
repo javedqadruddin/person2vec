@@ -24,13 +24,9 @@ class DataHandler(object):
 
 
     def create_snippet(self, entry):
-        try:
-            post_id = self.snippets_collection.insert_one(entry).inserted_id
-            #print("Successfully inserted into db")
-            return post_id
-        except:
-            pass
-            #print("Failed to insert into db")
+        post_id = self.snippets_collection.insert_one(entry).inserted_id
+        return post_id
+
 
 
     # removes all entities matching query
@@ -48,6 +44,12 @@ class DataHandler(object):
     def get_entities(self, query):
         return [entity for entity in self.entities_collection.find(query)]
 
+    # gets a single entity matching the query
+    def get_entity(self, query):
+        return self.entities_collection.find_one(query)
+
+    def get_snippet(self, query):
+        return self.snippets_collection.find_one(query)
 
     # returns an iterator over all entities matching query
     def get_entity_iterator(self, query=None):
@@ -62,6 +64,11 @@ class DataHandler(object):
     # returns all entities in the collection
     def get_all_entities(self):
         return [entity for entity in self.entities_collection.find({})]
+
+
+    def get_all_snippets(self):
+        return [snippet for snippet in self.snippets_collection.find({})]
+
 
 
     # returns total number of entities in the collection
