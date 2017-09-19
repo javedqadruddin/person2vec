@@ -16,6 +16,8 @@ class TrainingDataGenerator(object):
         self.handler = data_handler.DataHandler()
         self.word_vec_size = word_vec_size
         self.num_compare_entities = num_compare_entities
+        self.num_entities = handler.entity_count()
+        self.entity_dict = _create_entity_dict(handler)
 
 
     def _get_snippet_index(shuffle):
@@ -25,6 +27,27 @@ class TrainingDataGenerator(object):
         return index
 
 
-    def flow_from_db(shuffle=True, ):
+    # reduce entities to ints to they can be loaded into keras embedding layer
+    def _create_entity_x_y(name):
+        entity_num = entity_dict[name]
+        input_entity_nums = [entity_num]
+        for i in range(0, self.num_compare_entities):
+            
+
+
+
+    # for every snippet in the db, make a training example of the number corre
+    # sponding to the person along with n other random person numbers in random
+    # order plus the vectorized version of the snippet. y is the position of the
+    # correct person in the array of persons
+    def flow_from_db(shuffle=True, batch_size=32):
         snippet_index = get_snippet_index(shuffle)
+        batch = []
         for i in snippet_index:
+            entity = handler.get_entities('_id':i)
+            entity_x, y = self._create_entity_x_y(entity['name'])
+            word_x = self._vectorize_text(i['text'])
+            batch.append(([entity_x, word_x], y))
+            if len(batch) >= batch_size:
+                yield batch
+                batch = []
