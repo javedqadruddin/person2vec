@@ -76,16 +76,10 @@ class EmbeddingDataGenerator(object):
         batch = []
         for i in snippet_index:
             snippet = self.handler.get_snippet({'_id':i})
-            print("snippet is " + str(snippet))
             entity_id = snippet['owner_id']
-            print("entity_id is " + str(entity_id))
             entity = self.handler.get_entity({'_id':entity_id})
-            print("entity is " + str(entity['name']))
             entity_x, y = self._create_entity_x_y(entity['name'])
-            print("entity x is " + str(entity_x))
-            print("y is " + str(y))
             word_x = self._vectorize_text(snippet['text'])
-            print("word_x is " + str(len(word_x)))
             batch.append(([entity_x, word_x], y))
             if len(batch) >= batch_size:
                 yield batch
