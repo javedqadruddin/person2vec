@@ -6,6 +6,8 @@ from gensim.models import KeyedVectors
 from numpy.random import shuffle as rand_shuffle
 from numpy.random import randint as randint
 from numpy import zeros as np_zeros
+from numpy import array as np_array
+from numpy import append as np_append
 
 from person2vec import data_handler
 
@@ -60,6 +62,7 @@ class EmbeddingDataGenerator(object):
     def _vectorize_text(self, text):
         vectors = []
         for word in text.split():
+            # if there's no word2vec vector for this word, put in a vec of all 0
             try:
                 vectors.append(self.word_vectors.word_vec(word))
             except:
@@ -73,14 +76,24 @@ class EmbeddingDataGenerator(object):
     # correct person in the array of persons
     def flow_from_db(self, shuffle=True, batch_size=32):
         snippet_index = self._get_snippet_index(shuffle)
-        batch = []
-        for i in snippet_index:
-            snippet = self.handler.get_snippet({'_id':i})
-            entity_id = snippet['owner_id']
-            entity = self.handler.get_entity({'_id':entity_id})
-            entity_x, y = self._create_entity_x_y(entity['name'])
-            word_x = self._vectorize_text(snippet['text'])
-            batch.append(([entity_x, word_x], y))
-            if len(batch) >= batch_size:
-                yield batch
-                batch = []
+        batch_x_entity = []
+        batch_x_word = []
+        batch_y = []
+        while True:
+            for i in snippet_index:
+                snippet = self.handler.get_snippet({'_id':i})
+                entity_id = snippet['owner_id']
+                entity = self.handler.get_entity({'_id':entity_id})
+                entity_x, y = self._create_entity_x_y(entity['name'])
+                word_x = self._vectorize_text(snippet['text'])
+                batch_x_entity.append(entity_x)
+                batch_x_word.append(word_x)
+                batch_y.append(y)
+                #print(str(batch_y))
+                if len(batch_y) >= batch_size:
+                    #print('in if statement')
+                    yield ([np_array(batch_x_word), np_array(batch_x_entity)], np_array(batch_y))
+                    #print('ending batch')
+                    batch_x_entity = []
+                    batch_x_word = []
+                    batch_y = []
