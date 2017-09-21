@@ -133,7 +133,7 @@ def _get_word2vec_vector(row):
 def _associate_names_with_word_vecs(entities, data_gen):
     wordvecs_dict = {}
     for name in entities.index:
-        twordvecs_dict.update({name:_get_word2vec_vector(name)})
+        wordvecs_dict.update({name:_get_word2vec_vector(name)})
     return pandas.DataFrame.from_dict(wordvecs_dict, orient='index')
 
 
