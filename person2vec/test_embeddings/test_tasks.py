@@ -40,14 +40,12 @@ def get_embed_weights_from_model(model):
     raise ValueError("No embedding layer found. Please set the name property of your embedding layer contain the string '_embedding'")
 
 
-
 def _name_not_has_vec(name, data_gen):
     try:
         data_gen.word_vectors.word_vec(name.replace(' ','_'))
         return False
     except:
         return True
-
 
 
 def run_gender_task(entities, embeds, truncate, data_gen):
@@ -97,10 +95,11 @@ def _get_entities_from_db(handler):
 
 
 # input a model containing an embedding layer, tests will then be run on the embeddings
-# when truncat = True, it will test only on the entities for which word2vec word vectors exist
+# when truncate = True, it will test only on the entities for which word2vec word vectors exist
 def test_model(embedding_model, tasks=TASKS, data_gen=None, truncate=True):
     handler = data_handler.DataHandler()
 
+    # can pass a training_data_generator to save time, but, if none is passed, create one
     if not data_gen:
         data_gen = training_data_generator.EmbeddingDataGenerator(300, 4)
 
@@ -111,3 +110,27 @@ def test_model(embedding_model, tasks=TASKS, data_gen=None, truncate=True):
 
     _run_tasks(tasks, entities, embeds, truncate, data_gen)
 
+
+def _get_word2vec_vector(row):
+    return word2vec.word_vec(row.replace(' ','_')).flatten()
+
+
+def _associate_names_with_word_vecs(entities, data_gen):
+    wordvecs_dict = {}
+    for name in entities.index:
+        twordvecs_dict.update({name:_get_word2vec_vector(name)})
+    return pandas.DataFrame.from_dict(wordvecs_dict, orient='index')
+
+
+def test_word2vec(word2vec_object, tasks=TASKS, data_gen=None):
+    handler = data_handler.DataHandler()
+
+    # can pass a training_data_generator to save time, but, if none is passed, create one
+    if not data_gen:
+        data_gen = training_data_generator.EmbeddingDataGenerator(300, 4)
+
+    entities = _get_entities_from_db(handler)
+    entities = entities.drop([name for name in entities.index.values if _name_not_has_vec(name, data_gen)])
+    word_vecs = associate_names_with_word_vecs(entities, data_gen)
+
+    _run_tasks(tasks, entities, word_vecs, truncate=False, data_gen)
