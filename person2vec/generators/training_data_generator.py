@@ -41,7 +41,8 @@ class EmbeddingDataGenerator(object):
 
 
     # reduce entities to ints to they can be loaded into keras embedding layer
-    # create small list of entities as the input to the training
+    # create small list of entities as the input to the training--we want to
+    # predict, from a group of entities, which is the one that the snippet's talking about
     # make the index of the correct entity name's number for this snippet
     def _create_entity_x_y(self, name):
         entity_num = self.entity_dict[name]
@@ -75,25 +76,36 @@ class EmbeddingDataGenerator(object):
     # order plus the vectorized version of the snippet. y is the position of the
     # correct person in the array of persons
     def flow_from_db(self, shuffle=True, batch_size=32):
+        # shuffle the order of the snippets
         snippet_index = self._get_snippet_index(shuffle)
+
+        # set up variables to receive the batch of training data
         batch_x_entity = []
         batch_x_word = []
         batch_y = []
+
+        # generators for keras fit_generator need to return data infinitely
+        # stopping is handled at a higher level
         while True:
+            # for each snippet in our shuffled index
             for i in snippet_index:
+                # get the actual snippet using the id
                 snippet = self.handler.get_snippet({'_id':i})
+                # get the the entity that this snippet corresponds to
+                # (this is what we'll be trying to predict)
                 entity_id = snippet['owner_id']
                 entity = self.handler.get_entity({'_id':entity_id})
+                # create an input/output pair on the entity for this snippet
                 entity_x, y = self._create_entity_x_y(entity['name'])
+                # create input from the snippet
                 word_x = self._vectorize_text(snippet['text'])
                 batch_x_entity.append(entity_x)
                 batch_x_word.append(word_x)
                 batch_y.append(y)
-                #print(str(batch_y))
+                # when we have enough samples for one batch, yield it
                 if len(batch_y) >= batch_size:
-                    #print('in if statement')
                     yield ([np_array(batch_x_word), np_array(batch_x_entity)], np_array(batch_y))
-                    #print('ending batch')
+                    # flush the lists when batch is complete
                     batch_x_entity = []
                     batch_x_word = []
                     batch_y = []
