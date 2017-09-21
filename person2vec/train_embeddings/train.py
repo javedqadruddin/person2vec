@@ -19,6 +19,7 @@ def _build_default_model():
     # setting variables for size of incoming data
     handler = data_handler.DataHandler()
     num_total_entities = handler.entity_count()
+    word_vec_size = DEFAULT_SETTINGS['word_vec_size']
     snip_size = DEFAULT_SETTINGS['snippet_size']
     num_compare_entities = DEFAULT_SETTINGS['num_compare_entities']
     embedding_size = DEFAULT_SETTINGS['embedding_size']
