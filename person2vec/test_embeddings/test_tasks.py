@@ -111,6 +111,21 @@ def test_model(embedding_model, tasks=TASKS, data_gen=None, truncate=True):
     _run_tasks(tasks, entities, embeds, truncate, data_gen)
 
 
+# same as test_model but runs on a set of embeddings passed as an array
+def test_embeddings(embeddings, tasks=TASKS, data_gen=None, truncate=True):
+    handler = data_handler.DataHandler()
+
+    # can pass a training_data_generator to save time, but, if none is passed, create one
+    if not data_gen:
+        data_gen = training_data_generator.EmbeddingDataGenerator(300, 4)
+
+    embeds = reassociate_embeds_with_names(embeddings, data_gen)
+    entities = _get_entities_from_db(handler)
+
+    _run_tasks(tasks, entities, embeds, truncate, data_gen)
+
+
+
 def _get_word2vec_vector(row):
     return word2vec.word_vec(row.replace(' ','_')).flatten()
 

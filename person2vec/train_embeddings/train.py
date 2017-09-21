@@ -59,13 +59,14 @@ def train_model(model=None,
                 steps_per_epoch=1024,
                 embed_size=DEFAULT_SETTINGS['embedding_size'],
                 word_vec_size=DEFAULT_SETTINGS['word_vec_size'],
+                data_gen= None,
                 num_compare_entities=DEFAULT_SETTINGS['num_compare_entities']):
 
     if not model:
         model = _build_default_model()
 
-
-    data_gen = training_data_generator.EmbeddingDataGenerator(
+    if not data_gen:
+        data_gen = training_data_generator.EmbeddingDataGenerator(
                                             word_vec_size=word_vec_size,
                                             num_compare_entities=num_compare_entities)
     gen = data_gen.flow_from_db()
@@ -73,4 +74,4 @@ def train_model(model=None,
     model.fit_generator(gen, steps_per_epoch=steps_per_epoch, epochs=epochs, verbose=1)
 
     # return the model so user can do more with it later, inspect it, etc.
-    return model
+    return model, data_gen
