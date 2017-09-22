@@ -126,14 +126,14 @@ def test_embeddings(embeddings, tasks=TASKS, data_gen=None, truncate=True):
 
 
 
-def _get_word2vec_vector(row):
-    return word2vec.word_vec(row.replace(' ','_')).flatten()
+def _get_word2vec_vector(row, data_gen):
+    return data_gen.word_vectors.word_vec(row.replace(' ','_')).flatten()
 
 
 def _associate_names_with_word_vecs(entities, data_gen):
     wordvecs_dict = {}
     for name in entities.index:
-        wordvecs_dict.update({name:_get_word2vec_vector(name)})
+        wordvecs_dict.update({name:_get_word2vec_vector(name,data_gen)})
     return pandas.DataFrame.from_dict(wordvecs_dict, orient='index')
 
 
@@ -146,6 +146,6 @@ def test_word2vec(word2vec_object, tasks=TASKS, data_gen=None):
 
     entities = _get_entities_from_db(handler)
     entities = entities.drop([name for name in entities.index.values if _name_not_has_vec(name, data_gen)])
-    word_vecs = associate_names_with_word_vecs(entities, data_gen)
+    word_vecs = _associate_names_with_word_vecs(entities, data_gen)
 
-    _run_tasks(tasks, entities, word_vecs, truncate=False, data_gen)
+    _run_tasks(tasks=tasks, entities=entities, embeds=word_vecs, data_gen=data_gen, truncate=False)
