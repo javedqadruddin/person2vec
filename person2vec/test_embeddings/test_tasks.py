@@ -8,7 +8,7 @@ from keras.layers import Dense
 from person2vec import data_handler
 from person2vec.generators import training_data_generator
 
-TASKS=['gender']
+TASKS=['gender', 'occupation']
 
 
 # grabs the embedding from the embedding matrix with index corresponding to num
@@ -83,9 +83,44 @@ def run_gender_task(entities, embeds, truncate, data_gen):
                 epochs=90,
                 validation_data=(test_data, test_labels))
 
+
+def run_occupation_task(entities, embeds, truncate, data_gen):
+    entities.columns = ['occupation']
+
+    # one-hot encode the entities' occupations
+    entities = pandas.get_dummies(entities.occupation)
+
+    # sort them so training input and corresponding outputs will be in same order
+    embeds.sort_index(inplace=True)
+    entities.sort_index(inplace=True)
+
+    # removes any entities for which there is no word2vec embedding for comparison
+    if truncate:
+        entities = entities.drop([name for name in entities.index.values if _name_not_has_vec(name, data_gen)])
+        embeds = embeds.drop([name for name in embeds.index.values if _name_not_has_vec(name, data_gen)])
+
+    one_hot_occupations = entities.values
+
+    num_train_examples = 750
+    train_data = embeds[:num_train_examples].values
+    train_labels = one_hot_occupations[:num_train_examples]
+    test_data = embeds[num_train_examples:].values
+    test_labels = one_hot_occupations[num_train_examples:]
+
+    # TODO: probably make this a separate model constructor function
+    model = Sequential([Dense(4, input_shape=(300,), activation='softmax'),])
+    model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+    model.fit(train_data, train_labels,
+                verbose=1,
+                epochs=90,
+                validation_data=(test_data, test_labels))
+
+
 def _run_tasks(tasks, entities, embeds, truncate, data_gen):
     if 'gender' in tasks:
         run_gender_task(entities.drop(['texts', '_id', 'description', 'occupation'], axis=1), embeds, truncate, data_gen)
+    if 'occupation' in tasks:
+        run_occupation_task(entities.drop(['texts', '_id', 'description', 'gender'], axis=1), embeds, truncate, data_gen)
 
 
 def _get_entities_from_db(handler):
