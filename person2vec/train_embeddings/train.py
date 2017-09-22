@@ -74,4 +74,5 @@ def train_model(model=None,
     model.fit_generator(gen, steps_per_epoch=steps_per_epoch, epochs=epochs, verbose=1)
 
     # return the model so user can do more with it later, inspect it, etc.
+    # return the data_gen because it's frequently needed for testing and takes a while to initialize
     return model, data_gen
