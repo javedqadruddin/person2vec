@@ -48,13 +48,12 @@ def _name_not_has_vec(name, data_gen):
         return True
 
 
-def run_gender_task(entities, embeds, truncate, data_gen):
+def run_gender_task(entities, embeds, truncate, data_gen, embed_size):
     # entities dataframe contains name column as index and gender column as 'male'/'female'
     entities.columns = ['gender']
     # replace male and female with numbers for training
     entities['gender'].replace('female', 0, inplace=True)
     entities['gender'].replace('male', 1, inplace=True)
-
 
     # sort them so training input and corresponding outputs will be in same order
     embeds.sort_index(inplace=True)
@@ -76,7 +75,7 @@ def run_gender_task(entities, embeds, truncate, data_gen):
     test_labels = just_binary_genders[num_train_examples:]
 
     # TODO: probably make this a separate model constructor function
-    model = Sequential([Dense(1, input_shape=(300,), activation='sigmoid'),])
+    model = Sequential([Dense(1, input_shape=(embed_size,), activation='sigmoid'),])
     model.compile(optimizer='adam', loss='mean_squared_error', metrics=['accuracy'])
     model.fit(train_data, train_labels,
                 verbose=1,
@@ -84,7 +83,7 @@ def run_gender_task(entities, embeds, truncate, data_gen):
                 validation_data=(test_data, test_labels))
 
 
-def run_occupation_task(entities, embeds, truncate, data_gen):
+def run_occupation_task(entities, embeds, truncate, data_gen, embed_size):
     entities.columns = ['occupation']
 
     # one-hot encode the entities' occupations
@@ -108,7 +107,7 @@ def run_occupation_task(entities, embeds, truncate, data_gen):
     test_labels = one_hot_occupations[num_train_examples:]
 
     # TODO: probably make this a separate model constructor function
-    model = Sequential([Dense(4, input_shape=(300,), activation='softmax'),])
+    model = Sequential([Dense(4, input_shape=(embed_size,), activation='softmax'),])
     model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
     model.fit(train_data, train_labels,
                 verbose=1,
@@ -116,11 +115,11 @@ def run_occupation_task(entities, embeds, truncate, data_gen):
                 validation_data=(test_data, test_labels))
 
 
-def _run_tasks(tasks, entities, embeds, truncate, data_gen):
+def _run_tasks(tasks, entities, embeds, truncate, data_gen, embed_size):
     if 'gender' in tasks:
-        run_gender_task(entities.drop(['texts', '_id', 'description', 'occupation'], axis=1), embeds, truncate, data_gen)
+        run_gender_task(entities.drop(['texts', '_id', 'description', 'occupation', 'num'], axis=1), embeds, truncate, data_gen, embed_size)
     if 'occupation' in tasks:
-        run_occupation_task(entities.drop(['texts', '_id', 'description', 'gender'], axis=1), embeds, truncate, data_gen)
+        run_occupation_task(entities.drop(['texts', '_id', 'description', 'gender', 'num'], axis=1), embeds, truncate, data_gen, embed_size)
 
 
 def _get_entities_from_db(handler):
@@ -131,7 +130,7 @@ def _get_entities_from_db(handler):
 
 # input a model containing an embedding layer, tests will then be run on the embeddings
 # when truncate = True, it will test only on the entities for which word2vec word vectors exist
-def test_model(embedding_model, tasks=TASKS, data_gen=None, truncate=True):
+def test_model(embedding_model, tasks=TASKS, data_gen=None, truncate=True, embed_size=300):
     handler = data_handler.DataHandler()
 
     # can pass a training_data_generator to save time, but, if none is passed, create one
@@ -143,11 +142,11 @@ def test_model(embedding_model, tasks=TASKS, data_gen=None, truncate=True):
     embeds = reassociate_embeds_with_names(raw_embeds, data_gen)
     entities = _get_entities_from_db(handler)
 
-    _run_tasks(tasks, entities, embeds, truncate, data_gen)
+    _run_tasks(tasks, entities, embeds, truncate, data_gen, embed_size)
 
 
 # same as test_model but runs on a set of embeddings passed as an array
-def test_embeddings(embeddings, tasks=TASKS, data_gen=None, truncate=True):
+def test_embeddings(embeddings, tasks=TASKS, data_gen=None, truncate=True, embed_size=300):
     handler = data_handler.DataHandler()
 
     # can pass a training_data_generator to save time, but, if none is passed, create one

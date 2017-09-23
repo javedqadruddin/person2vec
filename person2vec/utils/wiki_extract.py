@@ -19,6 +19,7 @@ DECODER = {'citizenship':'P27',
             'Q10800557':'film actor',
             'film actor':'Q10800557',
             'Q43845':'businessperson',
+            'businessperson':'Q43845',
             'Q639669':'musician',
             'musician':'Q639669',
             'Q177220':'singer',
@@ -57,14 +58,24 @@ def get_gender(entity_dict):
 
 def get_occupation(entity_dict):
     occupations = entity_dict['claims'][word2id('occupation')]
-    occ_names = []
     for occupation in occupations:
-        occ_names.append(occupation['mainsnak']['datavalue']['value']['id'])
-    if word2id('politician') in occ_names:
-        return 'politician'
-    elif word2id('actor') in occ_names or word2id('film actor') in occ_names:
-        return 'actor'
-    elif word2id('singer') in occ_names or word2id('musician') in occ_names:
-        return 'musician'
-    else:
-        return 'businessperson'
+        occ_name = occupation['mainsnak']['datavalue']['value']['id']
+        if word2id('politician') == occ_name:
+            return 'politician'
+        if word2id('actor') == occ_name or word2id('film actor') == occ_name:
+            return 'actor'
+        if word2id('singer') == occ_name or word2id('musician') == occ_name:
+            return 'musician'
+        if word2id('businessperson') == occ_name:
+            return 'businessperson'
+    return 'businessperson'
+
+    # # iterate through the occupations collected and return the first
+    # for occ in occ_names:
+    #     if word2id('politician') in occ_names:
+    #         return 'politician'
+    #     elif word2id('actor') in occ_names or word2id('film actor') in occ_names:
+    #         return 'actor'
+    #     elif word2id('singer') in occ_names or word2id('musician') in occ_names:
+    #         return 'musician'
+    # return 'businessperson'

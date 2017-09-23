@@ -28,6 +28,11 @@ class DataHandler(object):
         return post_id
 
 
+    def update_entity(self, query, update_field, new_value):
+        self.entities_collection.update_one(query,
+                                            {'$set':{update_field:new_value}},
+                                            upsert=False)
+
 
     # removes all entities matching query
     def remove_entities(self, query):

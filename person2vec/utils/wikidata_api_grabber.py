@@ -4,7 +4,7 @@ import csv
 import json
 import time
 
-from . import wiki_extract
+import wiki_extract
 from person2vec import data_handler
 
 HERE = path.abspath(path.dirname(__file__))
@@ -170,6 +170,8 @@ def main():
                 # adds entries from dict returned by get_person_attributes to the existing dict
                 person_attributes.update(_get_person_attributes(first_entity))
                 person_attributes.update(person_article)
+                # a number that will be this person's number to find its embedding
+                person_attributes.update({'num':success_counter})
                 _write_to_db(person_attributes)
                 success_counter += 1
 
