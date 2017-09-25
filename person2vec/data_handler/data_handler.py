@@ -1,11 +1,13 @@
 from pymongo import MongoClient
 
+SETTINGS = {'default_db': 'person2vec_database'}
+
 class DataHandler(object):
-    def __init__(self):
+    def __init__(self, db_name=SETTINGS['default_db']):
         client = MongoClient()
         client = MongoClient('localhost', 27017)
 
-        self.db = client.person2vec_database
+        self.db = client[db_name]
         self.entities_collection = self.db.entities
         self.snippets_collection = self.db.snippets
 
