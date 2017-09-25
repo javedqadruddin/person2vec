@@ -40,7 +40,7 @@ def _build_default_model(num_compare_entities=DEFAULT_SETTINGS['num_compare_enti
     nex = Dropout(0.)(joint_embeds)
     nex = Dense(100, activation="relu", name='dense_consolidator')(nex)
     nex = Dropout(0.)(nex)
-    full_out = Dense (embedding_size, activation='softmax', name='final_output')(nex)
+    full_out = Dense (num_compare_entities, activation='softmax', name='final_output')(nex)
 
     model = Model([input_tensor_words, input_tensor_entity], full_out)
 
