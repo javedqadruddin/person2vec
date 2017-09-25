@@ -8,10 +8,16 @@ from numpy.random import randint as randint
 from numpy import zeros as np_zeros
 from numpy import array as np_array
 from numpy import append as np_append
+from os import path
 
 from person2vec import data_handler
+from person2vec.utils import preprocessor
 
-SETTINGS = {'word_vec_source':'../person2vec/data/GoogleNews-vectors-negative300.bin'}
+HERE = path.abspath(path.dirname(__file__))
+PROJECT_DIR = path.dirname(HERE)
+DATA_DIR = path.join(PROJECT_DIR, 'data')
+
+SETTINGS = {'word_vec_source':path.join(DATA_DIR, 'GoogleNews-vectors-negative300.bin')}
 
 
 class EmbeddingDataGenerator(object):
@@ -97,8 +103,10 @@ class EmbeddingDataGenerator(object):
                 entity = self.handler.get_entity({'_id':entity_id})
                 # create an input/output pair on the entity for this snippet
                 entity_x, y = self._create_entity_x_y(entity['name'])
+                # remove the entity's name from the snippet if it appears there
+                snippet_text = preprocessor.remove_entity_names(snippet['text'], entity['name'])
                 # create input from the snippet
-                word_x = self._vectorize_text(snippet['text'])
+                word_x = self._vectorize_text(snippet_text)
                 batch_x_entity.append(entity_x)
                 batch_x_word.append(word_x)
                 batch_y.append(y)
