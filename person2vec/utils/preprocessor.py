@@ -1,5 +1,6 @@
 # pre-processes data in the database by removing references to a person's name
 # from the snippets about that person and vectorizing the snippets with word2vec
+import re
 
 def split_names(name):
     names = name.split()
@@ -15,9 +16,9 @@ def split_names(name):
 def remove_entity_names(text, name):
     first_name, last_name, middle_names = split_names(name)
 
-    text = text.replace(first_name, 'name')
-    text = text.replace(last_name, 'name')
-    text = text.replace(first_name + '_' + last_name, 'name')
+    text = re.sub(r"\b%s\b" % first_name, 'name', text)
+    text = re.sub(r"\b%s\b" % last_name, 'name', text)
+    text = re.sub(r"\b%s\b" % first_name + '_' + last_name, 'name', text)
 
     if len(middle_names) > 0:
         for mid_name in middle_names:
