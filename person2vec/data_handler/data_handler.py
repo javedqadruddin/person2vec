@@ -19,7 +19,7 @@ class DataHandler(object):
     def create_entity(self, entry):
         try:
             post_id = self.entities_collection.insert_one(entry).inserted_id
-            print("Successfully inserted into db")
+            # print("Successfully inserted into db")
             return post_id
         except:
             print("Failed to insert into db")
@@ -31,9 +31,17 @@ class DataHandler(object):
 
 
     def update_entity(self, query, update_field, new_value):
-        self.entities_collection.update_one(query,
+        success = self.entities_collection.update_one(query,
                                             {'$set':{update_field:new_value}},
                                             upsert=False)
+        return success.modified_count
+
+
+    def update_entity_array(self, query, update_field, new_value):
+        success = self.entities_collection.update_one(query,
+                                            {'$push':{update_field:new_value}},
+                                            upsert=False)
+        return success.modified_count
 
 
     # removes all entities matching query

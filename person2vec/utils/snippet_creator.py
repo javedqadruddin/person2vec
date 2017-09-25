@@ -13,6 +13,9 @@ def remove_punctuation(text):
     return just_alnum_pattern.sub('', text)
 
 
+# iterates through list of words until it gets within snippet_len of the end
+# once it reaches that point, gives the last snippet_len words as last snippet_len
+# and returns
 def slice_into_snippets(text, snippet_len, sample_spacing):
     words = text.split()
     subs = []
