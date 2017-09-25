@@ -22,7 +22,7 @@ def remove_entity_names(text, name):
 
     if len(middle_names) > 0:
         for mid_name in middle_names:
-            text = text.replace('name ' + mid_name, 'name name')
-            text = text.replace(mid_name + ' name', 'name name')
+            text = text.replace('name ' + mid_name + ' ', 'name name ')
+            text = text.replace(' ' + mid_name + ' name', ' name name')
 
     return text

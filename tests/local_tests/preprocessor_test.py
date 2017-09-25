@@ -22,5 +22,5 @@ def test_remove_entity_names_easy():
 
 def test_dont_remove_name_part_of_word():
     name = 'George H W Bush'
-    text = 'Hello there, lets Bushwack the Wild West'
-    assert preprocessor.remove_entity_names(text, name) == 'Hello there, lets Bushwack the Wild West'
+    text = 'George Hello there, lets Bushwack the Wild West'
+    assert preprocessor.remove_entity_names(text, name) == 'name Hello there, lets Bushwack the Wild West'
