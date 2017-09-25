@@ -15,13 +15,13 @@ DEFAULT_SETTINGS = {'word_vec_size':300,
                     }
 
 
-def _build_default_model():
+def _build_default_model(num_compare_entities=DEFAULT_SETTINGS['num_compare_entities'],
+                        word_vec_size=DEFAULT_SETTINGS['word_vec_size']):
     # setting variables for size of incoming data
     handler = data_handler.DataHandler()
     num_total_entities = handler.entity_count()
     word_vec_size = DEFAULT_SETTINGS['word_vec_size']
     snip_size = DEFAULT_SETTINGS['snippet_size']
-    num_compare_entities = DEFAULT_SETTINGS['num_compare_entities']
     embedding_size = DEFAULT_SETTINGS['embedding_size']
 
     input_tensor_words = Input(shape=(snip_size, word_vec_size,), dtype='float32', name='word_input')
@@ -62,13 +62,19 @@ def train_model(model=None,
                 data_gen= None,
                 num_compare_entities=DEFAULT_SETTINGS['num_compare_entities']):
 
-    if not model:
-        model = _build_default_model()
-
-    if not data_gen:
+    # if a data_gen is passed in, get variables from it, if not, create a data_gen
+    # with default variable values
+    if data_gen:
+        word_vec_size = data_gen.word_vec_size
+        num_compare_entities = data_gen.num_compare_entities
+    else:
         data_gen = training_data_generator.EmbeddingDataGenerator(
                                             word_vec_size=word_vec_size,
                                             num_compare_entities=num_compare_entities)
+
+    if not model:
+        model = _build_default_model(num_compare_entities)
+
     gen = data_gen.flow_from_db()
 
     model.fit_generator(gen, steps_per_epoch=steps_per_epoch, epochs=epochs, verbose=1)
