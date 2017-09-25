@@ -16,17 +16,17 @@ def split_names(name):
 def remove_entity_names(text, name):
     first_name, last_name, middle_names = split_names(name)
 
-#    text = text.replace(first_name, 'name')
-#    text = text.replace(last_name, 'name')
+    text = text.replace(' ' + first_name + ' ', ' name ')
+    text = text.replace(' ' + last_name + ' ', ' name ')
 #    text = text.replace(first_name + '_' + last_name, 'name')
 
-    text = re.sub(r"\b%s\b" % first_name, ' name ', text)
-    text = re.sub(r"\b%s\b" % last_name, ' name ', text)
-    text = re.sub(r"\b%s\b" % first_name + '_' + last_name, ' name ', text)
+#    text = re.sub(r"\b%s\b" % first_name, ' name ', text)
+#    text = re.sub(r"\b%s\b" % last_name, ' name ', text)
+#    text = re.sub(r"\b%s\b" % first_name + '_' + last_name, ' name ', text)
 
     if len(middle_names) > 0:
         for mid_name in middle_names:
-            text = text.replace('name ' + mid_name + ' ', 'name name ')
-            text = text.replace(' ' + mid_name + ' name', ' name name')
+            text = text.replace('name  ' + mid_name + ' ', 'name name ')
+            text = text.replace(' ' + mid_name + '  name', ' name name')
 
     return text

@@ -13,14 +13,14 @@ def test_split_names_easy():
 def test_remove_entity_names_hard():
     name = 'George H W Bush'
     text = 'George H W Bush was president of the H United States before Bill Clinton'
-    assert preprocessor.remove_entity_names(text, name) == 'name name name name was president of the H United States before Bill Clinton'
+    assert preprocessor.remove_entity_names(text, name) == 'George H W name was president of the H United States before Bill Clinton'
 
 def test_remove_entity_names_easy():
     name = 'Bill Clinton'
     text = 'George H W Bush was president of the H United States before Bill Clinton'
-    assert preprocessor.remove_entity_names(text, name) == 'George H W Bush was president of the H United States before name name'
+    assert preprocessor.remove_entity_names(text, name) == 'George H W Bush was president of the H United States before name Clinton'
 
 def test_dont_remove_name_part_of_word():
     name = 'George H W Bush'
     text = 'George Hello there, lets Bushwack the Wild West'
-    assert preprocessor.remove_entity_names(text, name) == 'name Hello there, lets Bushwack the Wild West'
+    assert preprocessor.remove_entity_names(text, name) == 'George Hello there, lets Bushwack the Wild West'
