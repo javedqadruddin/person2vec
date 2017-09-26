@@ -54,7 +54,15 @@ class EmbeddingDataGenerator(object):
         entity_num = self.entity_dict[name]
         input_entity_nums = [entity_num]
         for i in range(0, self.num_compare_entities - 1):
-            input_entity_nums.append(randint(0, self.total_entity_count))
+            new_entity_num = entity_num
+            # while loop to ensure entities added to training example are not
+            # same entity as the correct entity
+            while new_entity_num == entity_num:
+                new_entity_num = randint(0, self.total_entity_count)
+            input_entity_nums.append(new_entity_num)
+        # shuffle so that correct entity doesn't always appear in same position
+        # without shuffling, net would learn to always just predict correct
+        # entity in position 0
         rand_shuffle(input_entity_nums)
 
         # make y the one-hotted index where the correct entity name for this snippet resides
