@@ -117,9 +117,11 @@ def run_occupation_task(entities, embeds, truncate, data_gen, embed_size):
 
 def _run_tasks(tasks, entities, embeds, truncate, data_gen, embed_size):
     if 'gender' in tasks:
-        run_gender_task(entities.drop(['texts', '_id', 'description', 'occupation', 'num'], axis=1), embeds, truncate, data_gen, embed_size)
+        to_drop = list(set(entities.columns) - set(['name','gender']))
+        run_gender_task(entities.drop(to_drop, axis=1), embeds, truncate, data_gen, embed_size)
     if 'occupation' in tasks:
-        run_occupation_task(entities.drop(['texts', '_id', 'description', 'gender', 'num'], axis=1), embeds, truncate, data_gen, embed_size)
+        to_drop = list(set(entities.columns) - set(['name','occupation']))
+        run_occupation_task(entities.drop(to_drop, axis=1), embeds, truncate, data_gen, embed_size)
 
 
 def _get_entities_from_db(handler):
