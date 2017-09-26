@@ -17,19 +17,20 @@ def _get_entity_vec(num, embeds):
 
 
 # goes faster if a data generator is passed in because initialization steps can then be skipped
-def reassociate_embeds_with_names(embeds, data_gen=None):
+def reassociate_embeds_with_ids(embeds, data_gen=None):
     # the numbers that stand for entities that were fed to the embedding layer
-    # entity_dict contains the entity name to number mapping
-    name_and_number = pandas.DataFrame.from_dict(data_gen.entity_dict, orient='index')
+    # entity_dict contains the entity id to number mapping
+    id_and_number = pandas.DataFrame.from_dict(data_gen.entity_dict, orient='index')
 
-    # this gives you a dataframe with 2 columns, name and vector
-    name_and_number[0] = name_and_number[0].apply(_get_entity_vec, args=(embeds,))
-    name_and_entity_vec = name_and_number
-    name_and_entity_vec.columns = ['vector']
+    # this gives you a dataframe with 2 columns, id and vector
+    id_and_number[0] = id_and_number[0].apply(_get_entity_vec, args=(embeds,))
+
+    id_and_entity_vec = id_and_number
+    id_and_entity_vec.columns = ['vector']
 
     # this gives you dataframe with 1 + number of dimensions of the vector columns
-    # 1 column for entity's name and the rest of columns are single values in the vectors
-    entity_vecs = name_and_entity_vec.vector.apply(pandas.Series)
+    # 1 column for entity's id and the rest of columns are single values in the vectors
+    entity_vecs = id_and_entity_vec.vector.apply(pandas.Series)
     return entity_vecs
 
 
@@ -49,20 +50,25 @@ def _name_not_has_vec(name, data_gen):
 
 
 def run_gender_task(entities, embeds, truncate, data_gen, embed_size):
-    # entities dataframe contains name column as index and gender column as 'male'/'female'
-    entities.columns = ['gender']
+    # entities dataframe contains id column as index and gender column as 'male'/'female'
+    entities.columns = ['name', '_id', 'gender']
     # replace male and female with numbers for training
     entities['gender'].replace('female', 0, inplace=True)
     entities['gender'].replace('male', 1, inplace=True)
 
-    # sort them so training input and corresponding outputs will be in same order
-    embeds.sort_index(inplace=True)
-    entities.sort_index(inplace=True)
-
     # removes any entities for which there is no word2vec embedding for comparison
     if truncate:
         entities = entities.drop([name for name in entities.index.values if _name_not_has_vec(name, data_gen)])
-        embeds = embeds.drop([name for name in embeds.index.values if _name_not_has_vec(name, data_gen)])
+        
+    # names no longer needed, so set the index to the _id value, which automatically drops the names (which were the index previously)
+    entities.set_index('_id', inplace=True)
+    # removes entries from embeds that are not in entities (this will occur if entities has been truncated)
+    embeds = embeds.drop([id for id in embeds.index.values if not entities.index.contains(id)])
+
+
+    # sort them so training input and corresponding outputs will be in same order
+    embeds.sort_index(inplace=True)
+    entities.sort_index(inplace=True)
 
     # get the raw y vector for training
     genders = pandas.Series(entities['gender'])
@@ -84,19 +90,25 @@ def run_gender_task(entities, embeds, truncate, data_gen, embed_size):
 
 
 def run_occupation_task(entities, embeds, truncate, data_gen, embed_size):
-    entities.columns = ['occupation']
+    entities.columns = ['name', '_id', 'occupation']
 
     # one-hot encode the entities' occupations
     entities = pandas.get_dummies(entities.occupation)
-
-    # sort them so training input and corresponding outputs will be in same order
-    embeds.sort_index(inplace=True)
-    entities.sort_index(inplace=True)
 
     # removes any entities for which there is no word2vec embedding for comparison
     if truncate:
         entities = entities.drop([name for name in entities.index.values if _name_not_has_vec(name, data_gen)])
         embeds = embeds.drop([name for name in embeds.index.values if _name_not_has_vec(name, data_gen)])
+
+    # names no longer needed, so set the index to the _id value, which automatically drops the names (which were the index previously)
+    entities.set_index('_id', inplace=True)
+    # removes entries from embeds that are not in entities (this will occur if entities has been truncated)
+    embeds = embeds.drop([id for id in embeds.index.values if not entities.index.contains(id)])
+
+
+    # sort them so training input and corresponding outputs will be in same order
+    embeds.sort_index(inplace=True)
+    entities.sort_index(inplace=True)
 
     one_hot_occupations = entities.values
 
@@ -117,10 +129,10 @@ def run_occupation_task(entities, embeds, truncate, data_gen, embed_size):
 
 def _run_tasks(tasks, entities, embeds, truncate, data_gen, embed_size):
     if 'gender' in tasks:
-        to_drop = list(set(entities.columns) - set(['name','gender']))
+        to_drop = list(set(entities.columns) - set(['name','_id','gender']))
         run_gender_task(entities.drop(to_drop, axis=1), embeds, truncate, data_gen, embed_size)
     if 'occupation' in tasks:
-        to_drop = list(set(entities.columns) - set(['name','occupation']))
+        to_drop = list(set(entities.columns) - set(['name','_id','occupation']))
         run_occupation_task(entities.drop(to_drop, axis=1), embeds, truncate, data_gen, embed_size)
 
 
@@ -141,7 +153,7 @@ def test_model(embedding_model, tasks=TASKS, data_gen=None, truncate=True, embed
 
 
     raw_embeds = get_embed_weights_from_model(embedding_model)
-    embeds = reassociate_embeds_with_names(raw_embeds, data_gen)
+    embeds = reassociate_embeds_with_ids(raw_embeds, data_gen)
     entities = _get_entities_from_db(handler)
 
     _run_tasks(tasks, entities, embeds, truncate, data_gen, embed_size)
@@ -155,7 +167,7 @@ def test_embeddings(embeddings, tasks=TASKS, data_gen=None, truncate=True, embed
     if not data_gen:
         data_gen = training_data_generator.EmbeddingDataGenerator(300, 4)
 
-    embeds = reassociate_embeds_with_names(embeddings, data_gen)
+    embeds = reassociate_embeds_with_ids(embeddings, data_gen)
     entities = _get_entities_from_db(handler)
 
     _run_tasks(tasks, entities, embeds, truncate, data_gen)

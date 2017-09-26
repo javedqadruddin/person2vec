@@ -34,7 +34,7 @@ class EmbeddingDataGenerator(object):
         entity_dict = {}
         count = 0
         for entity in handler.get_entity_iterator():
-            entity_dict.update({entity['name']:count})
+            entity_dict.update({entity['_id']:count})
             count += 1
         return entity_dict
 
