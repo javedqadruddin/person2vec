@@ -7,6 +7,12 @@ def test_remove_punctuation():
     assert snippet_creator.remove_punctuation(test_str) == "Hello This is a test string 99"
 
 
+def test_build_snippet_from_repeats():
+    test_str = '1 2 3'
+    test_words = test_str.split()
+    result = snippet_creator._build_snippet_from_repeats(test_words, 5)
+    assert result == '1 2 3 1 2'
+
 
 def test_slice_into_snippets_start():
     test_str = '1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16'
@@ -47,4 +53,4 @@ def test_get_entity_snippets():
     result = snippet_creator.get_entity_snippets(test_entity, settings)
     assert result == ['hello this is a',
                         'is a test text',
-                        'hi there']
+                        'hi there hi there']

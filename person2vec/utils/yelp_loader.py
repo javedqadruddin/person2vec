@@ -36,7 +36,7 @@ def create_text_entry(entry):
     return business_entry, user_entry
 
 
-def load_reviews(handler):
+def load_reviews(business_handler, user_handler):
     print('===========Loading Reviews==================')
     count = 0
     with open('../data/yelp/dataset/review.json', 'r') as f:
@@ -44,14 +44,15 @@ def load_reviews(handler):
             line_json = json.loads(line)
             business_id = line_json['business_id']
             user_id = line_json['user_id']
-            business_entry, user_entry = create_text_entry(line_json)
-            handler.update_entity_array({'_id':business_id}, 'texts', business_entry)
-            handler.update_entity_array({'_id':user_id}, 'texts', user_entry)
+            text = line_json['text']
+            #business_entry, user_entry = create_text_entry(line_json)
+            business_handler.update_entity_array({'_id':business_id}, 'texts', text)
+            user_handler.update_entity_array({'_id':user_id}, 'texts', text)
             count += 1
             print('inserted review number ' + str(count))
 
 
-def load_tips(handler):
+def load_tips(business_handler, user_handler):
     print('===========Loading Tips==================')
     count = 0
     with open('../data/yelp/dataset/tip.json', 'r') as f:
@@ -59,9 +60,10 @@ def load_tips(handler):
             line_json = json.loads(line)
             business_id = line_json['business_id']
             user_id = line_json['user_id']
-            business_entry, user_entry = create_text_entry(line_json)
-            handler.update_entity_array({'_id':business_id}, 'texts', business_entry)
-            handler.update_entity_array({'_id':user_id}, 'texts', user_entry)
+            text = line_json['text']
+            #business_entry, user_entry = create_text_entry(line_json)
+            business_handler.update_entity_array({'_id':business_id}, 'texts', text)
+            user_handler.update_entity_array({'_id':user_id}, 'texts', text)
             count += 1
             print('inserted tip number ' + str(count))
 
@@ -80,12 +82,13 @@ def load_stars(handler):
             print('inserted star number ' + str(count))
 
 def load_yelp_data():
-    handler = data_handler.DataHandler('yelp_database')
-    load_businesses(handler)
-    load_users(handler)
-    load_reviews(handler)
-    load_tips(handler)
-    load_stars(handler)
+    business_handler = data_handler.DataHandler('yelp_business_database')
+    user_handler = data_handler.DataHandler('yelp_user_database')
+    load_businesses(business_handler)
+    load_users(user_handler)
+    load_reviews(business_handler=business_handler, user_handler=user_handler)
+    load_tips(business_handler=business_handler, user_handler=user_handler)
+    load_stars(user_handler)
 
 
 def main():
