@@ -34,7 +34,7 @@ class EmbeddingDataGenerator(object):
         entity_dict = {}
         count = 0
         for entity in handler.get_entity_iterator():
-            entity_dict.update({entity['name']:count})
+            entity_dict.update({entity['_id']:count})
             count += 1
         return entity_dict
 
@@ -50,8 +50,8 @@ class EmbeddingDataGenerator(object):
     # create small list of entities as the input to the training--we want to
     # predict, from a group of entities, which is the one that the snippet's talking about
     # make the index of the correct entity name's number for this snippet
-    def _create_entity_x_y(self, name):
-        entity_num = self.entity_dict[name]
+    def _create_entity_x_y(self, id):
+        entity_num = self.entity_dict[id]
         input_entity_nums = [entity_num]
         for i in range(0, self.num_compare_entities - 1):
             new_entity_num = entity_num
@@ -110,7 +110,7 @@ class EmbeddingDataGenerator(object):
                 entity_id = snippet['owner_id']
                 entity = self.handler.get_entity({'_id':entity_id})
                 # create an input/output pair on the entity for this snippet
-                entity_x, y = self._create_entity_x_y(entity['name'])
+                entity_x, y = self._create_entity_x_y(entity['_id'])
                 # remove the entity's name from the snippet if it appears there
                 snippet_text = preprocessor.remove_entity_names(snippet['text'], entity['name'])
                 # create input from the snippet

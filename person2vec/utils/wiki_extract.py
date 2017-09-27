@@ -23,8 +23,22 @@ DECODER = {'citizenship':'P27',
             'Q639669':'musician',
             'musician':'Q639669',
             'Q177220':'singer',
-            'singer':'Q177220'
+            'singer':'Q177220',
+            'date of birth':'P569',
+            'member of political party':'P102',
+            'democrat':'Q29552',
+            'republican':'Q29468'
             }
+
+CLAIMS_LIST = ['P27',               #citizenship
+                'P103',             #native language
+                'P39',              #position held
+                'P166',             #award received
+                'P69',              #educated at
+                'P172',             #ethnic group
+                'P1303',            #instrument
+                'P512',             #academic degree
+                'P551']             #residence
 
 
 def id2word(id):
@@ -54,6 +68,44 @@ def get_description(entity_dict):
 
 def get_gender(entity_dict):
     return id2word([entity_dict['claims'][word2id('gender')][0]['mainsnak']['datavalue']['value']['id']][0])
+
+
+def get_birth_date(entity_dict):
+    try:
+        return entity_dict['claims'][word2id('date of birth')][0]['mainsnak']['datavalue']['value']['time']
+    except:
+        return 'unknown'
+
+def get_party(entity_dict):
+    try:
+        parties = entity_dict['claims'][word2id('member of political party')]
+    except:
+        return 'unknown'
+    for party in parties:
+        try:
+            party_name = party['mainsnak']['datavalue']['value']['id']
+        except:
+            continue
+        if word2id('democrat') == party_name:
+            return 'democrat'
+        if word2id('republican') == party_name:
+            return 'republican'
+    return 'other'
+
+
+
+def get_claims(entity_dict):
+    claims = {}
+    for claim in CLAIMS_LIST:
+        try:
+            entry_list = entity_dict['claims'][claim]
+        except:
+            continue
+        claims.update({claim:[]})
+        for entry in entry_list:
+            value = entry['mainsnak']['datavalue']['value']['id']
+            claims[claim].append(value)
+    return claims
 
 
 def get_occupation(entity_dict):

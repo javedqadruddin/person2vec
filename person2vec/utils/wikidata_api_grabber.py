@@ -75,6 +75,10 @@ def _get_person_attributes(person_dict):
     attributes_dict.update({"description":wiki_extract.get_description(person_dict)})
     attributes_dict.update({"gender":wiki_extract.get_gender(person_dict)})
     attributes_dict.update({"occupation":wiki_extract.get_occupation(person_dict)})
+    attributes_dict.update({"birth_date":wiki_extract.get_birth_date(person_dict)})
+    attributes_dict.update({"political_party":wiki_extract.get_party(person_dict)})
+    attributes_dict.update({"claims":wiki_extract.get_claims(person_dict)})
+
     return attributes_dict
 
 
