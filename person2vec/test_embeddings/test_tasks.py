@@ -5,11 +5,12 @@ import numpy as np
 from datetime import date
 from keras.models import Sequential
 from keras.layers import Dense
+from keras import optimizers
 
 from person2vec import data_handler
 from person2vec.generators import training_data_generator
 
-TASKS=['gender', 'occupation']
+TASKS=['gender', 'occupation', 'age']
 
 
 # grabs the embedding from the embedding matrix with index corresponding to num
@@ -83,7 +84,10 @@ def _to_yrs_since(time_str):
     month = time_str[6:8]
     day = time_str[9:11]
 
-    dob = date(int(yr), int(month), int(day))
+    try:
+        dob = date(int(yr), int(month), int(day))
+    except:
+        return 'error'
 
     delta = date.today() - dob
 
@@ -97,10 +101,13 @@ def run_age_task(entities, embeds, truncate, data_gen, embed_size):
     if truncate:
         entities = _truncate_list(entities, data_gen)
 
-    entities, embeds = _align_frames(entities, embeds)
-
     entities['age'] = entities['birth_date'].apply(_to_yrs_since)
     entities.drop('birth_date', inplace=True, axis=1)
+
+    # cleaning data with bad date format
+    entities = entities[entities.age != 'error']
+
+    entities, embeds = _align_frames(entities, embeds)
 
     ages = pandas.Series(entities['age'])
     ages_nums = np.array(ages)
@@ -109,10 +116,11 @@ def run_age_task(entities, embeds, truncate, data_gen, embed_size):
 
     # TODO: probably make this a separate model constructor function
     model = Sequential([Dense(1, input_shape=(embed_size,), activation='linear'),])
-    model.compile(optimizer='adam', loss='mean_squared_error', metrics=['accuracy'])
+    opt = optimizers.Adam(lr=0.02)
+    model.compile(optimizer=opt, loss='mean_squared_error', metrics=['accuracy'])
     model.fit(train_data, train_labels,
                 verbose=1,
-                epochs=90,
+                epochs=500,
                 validation_data=(test_data, test_labels))
 
 
@@ -188,6 +196,9 @@ def _run_tasks(tasks, entities, embeds, truncate, data_gen, embed_size):
     if 'occupation' in tasks:
         to_drop = list(set(entities.columns) - set(['name','_id','occupation']))
         run_occupation_task(entities.drop(to_drop, axis=1), embeds, truncate, data_gen, embed_size)
+    if 'age' in tasks:
+        to_drop = list(set(entities.columns) - set(['name','_id','birth_date']))
+        run_age_task(entities.drop(to_drop, axis=1), embeds, truncate, data_gen, embed_size)
 
 
 def _get_entities_from_db(handler):
