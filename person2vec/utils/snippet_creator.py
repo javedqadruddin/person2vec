@@ -14,6 +14,7 @@ def remove_punctuation(text):
 
 
 def _build_snippet_from_repeats(words, snippet_len):
+    #print(len(words))
     while len(words) < snippet_len:
         words = words + words
     # if it went over the snippet_len, truncate it at snippet_len
@@ -44,7 +45,6 @@ def slice_into_snippets(text, snippet_len, sample_spacing):
 
 
 def process_text(text, settings):
-    text = remove_punctuation(text)
     snippets = slice_into_snippets(text, settings['snippet_len'], settings['stride'])
     return snippets
 
@@ -55,7 +55,8 @@ def process_text(text, settings):
 def process_texts(texts, settings):
     snippet_list = []
     for text in texts:
-        if len(text) > 0:
+        text = remove_punctuation(text)
+        if len(text.split()) > 0:
             snippets = process_text(text, settings)
             for snippet in snippets:
                 snippet_list.append(snippet)
@@ -83,5 +84,5 @@ def snippetize_db(handler):
         if len(entity['texts']) > 0:
             count += 1
             snippets = get_entity_snippets(entity, SETTINGS)
-            print("writing snippets for " + entity['name'] + " number " + str(count) + " of " + str(num_entities))
+            print("writing snippets for " + entity['_id'] + " number " + str(count) + " of " + str(num_entities))
             write_snippets(handler, entity, snippets)
