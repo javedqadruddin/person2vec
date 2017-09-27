@@ -2,6 +2,7 @@
 # can also run word2vec embeddings against the same tasks
 import pandas
 import numpy as np
+from datetime import date
 from keras.models import Sequential
 from keras.layers import Dense
 
@@ -64,7 +65,7 @@ def _align_frames(entities, embeds):
     embeds.sort_index(inplace=True)
     entities.sort_index(inplace=True)
 
-    return entities, embeds   
+    return entities, embeds
 
 
 def _split_train_test(embeds, labels):
@@ -77,8 +78,43 @@ def _split_train_test(embeds, labels):
     return train_data, train_labels, test_data, test_labels
 
 
+def _to_yrs_since(time_str):
+    yr = time_str[1:5]
+    month = time_str[6:8]
+    day = time_str[9:11]
+
+    dob = date(int(yr), int(month), int(day))
+
+    delta = date.today() - dob
+
+    return delta.days / 365.0
+
+
 def run_age_task(entities, embeds, truncate, data_gen, embed_size):
-    pass
+    entities.columns = ['_id', 'birth_date']
+
+    # removes any entities for which there is no word2vec embedding for comparison
+    if truncate:
+        entities = _truncate_list(entities, data_gen)
+
+    entities, embeds = _align_frames(entities, embeds)
+
+    entities['age'] = entities['birth_date'].apply(_to_yrs_since)
+    entities.drop('birth_date', inplace=True, axis=1)
+
+    ages = pandas.Series(entities['age'])
+    ages_nums = np.array(ages)
+
+    train_data, train_labels, test_data, test_labels = _split_train_test(embeds, ages_nums)
+
+    # TODO: probably make this a separate model constructor function
+    model = Sequential([Dense(1, input_shape=(embed_size,), activation='linear'),])
+    model.compile(optimizer='adam', loss='mean_squared_error', metrics=['accuracy'])
+    model.fit(train_data, train_labels,
+                verbose=1,
+                epochs=90,
+                validation_data=(test_data, test_labels))
+
 
 def run_gender_task(entities, embeds, truncate, data_gen, embed_size):
     # entities dataframe contains id column as index and gender column as 'male'/'female'
