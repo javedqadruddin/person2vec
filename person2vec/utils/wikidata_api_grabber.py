@@ -175,7 +175,7 @@ def main():
                 person_attributes.update(_get_person_attributes(first_entity))
                 person_attributes.update(person_article)
                 # a number that will be this person's number to find its embedding
-                person_attributes.update({'num':success_counter})
+                person_attributes.update({'embed_num':success_counter})
                 _write_to_db(person_attributes)
                 success_counter += 1
 
