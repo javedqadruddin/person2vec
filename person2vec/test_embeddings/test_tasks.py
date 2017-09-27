@@ -60,7 +60,7 @@ def _align_frames(entities, embeds):
     entities.set_index('_id', inplace=True)
 
     # removes entries from embeds that are not in entities (this will occur if entities has been truncated)
-    embeds = embeds.drop([id for id in embeds.index.values if not entities.index.contains(id)])
+    embeds = embeds.drop([id for id in embeds.index.values if id not in entities.index])
 
     # sort them so training input and corresponding outputs will be in same order
     embeds.sort_index(inplace=True)
@@ -158,16 +158,9 @@ def run_occupation_task(entities, embeds, truncate, data_gen, embed_size):
 
     # removes any entities for which there is no word2vec embedding for comparison
     if truncate:
-        entities = entities.drop([name for name in entities.index.values if _name_not_has_vec(name, data_gen)])
+        entities = _truncate_list(entities, data_gen)
 
-    # names no longer needed, so set the index to the _id value, which automatically drops the names (which were the index previously)
-    entities.set_index('_id', inplace=True)
-    # removes entries from embeds that are not in entities (this will occur if entities has been truncated)
-    embeds = embeds.drop([id for id in embeds.index.values if not entities.index.contains(id)])
-
-    # sort them so training input and corresponding outputs will be in same order
-    embeds.sort_index(inplace=True)
-    entities.sort_index(inplace=True)
+    entities, embeds = _align_frames(entities, embeds)
 
     # one-hot encode the entities' occupations
     entities = pandas.get_dummies(entities.occupation)
