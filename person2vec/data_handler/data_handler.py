@@ -13,7 +13,7 @@ class DataHandler(object):
 
 
     def get_snippet_index(self):
-        return self.snippets_collection.distinct('_id',{})
+        return [snippet['_id'] for snippet in self.get_snippet_iterator()]
 
 
     def create_entity(self, entry):
