@@ -49,17 +49,21 @@ def _name_not_has_vec(name, data_gen):
         return True
 
 
+def run_age_task(entities, embeds, truncate, data_gen, embed_size):
+
+
+
+
+
+
 def run_gender_task(entities, embeds, truncate, data_gen, embed_size):
     # entities dataframe contains id column as index and gender column as 'male'/'female'
     entities.columns = ['_id', 'gender']
-    # replace male and female with numbers for training
-    entities['gender'].replace('female', 0, inplace=True)
-    entities['gender'].replace('male', 1, inplace=True)
 
     # removes any entities for which there is no word2vec embedding for comparison
     if truncate:
         entities = entities.drop([name for name in entities.index.values if _name_not_has_vec(name, data_gen)])
-        
+
     # names no longer needed, so set the index to the _id value, which automatically drops the names (which were the index previously)
     entities.set_index('_id', inplace=True)
     # removes entries from embeds that are not in entities (this will occur if entities has been truncated)
@@ -69,6 +73,10 @@ def run_gender_task(entities, embeds, truncate, data_gen, embed_size):
     # sort them so training input and corresponding outputs will be in same order
     embeds.sort_index(inplace=True)
     entities.sort_index(inplace=True)
+
+    # replace male and female with numbers for training
+    entities['gender'].replace('female', 0, inplace=True)
+    entities['gender'].replace('male', 1, inplace=True)
 
     # get the raw y vector for training
     genders = pandas.Series(entities['gender'])
@@ -101,13 +109,12 @@ def run_occupation_task(entities, embeds, truncate, data_gen, embed_size):
     # removes entries from embeds that are not in entities (this will occur if entities has been truncated)
     embeds = embeds.drop([id for id in embeds.index.values if not entities.index.contains(id)])
 
-    # one-hot encode the entities' occupations
-    entities = pandas.get_dummies(entities.occupation)
-
-
     # sort them so training input and corresponding outputs will be in same order
     embeds.sort_index(inplace=True)
     entities.sort_index(inplace=True)
+
+    # one-hot encode the entities' occupations
+    entities = pandas.get_dummies(entities.occupation)
 
     one_hot_occupations = entities.values
 
