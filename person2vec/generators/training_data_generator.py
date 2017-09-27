@@ -17,13 +17,15 @@ HERE = path.abspath(path.dirname(__file__))
 PROJECT_DIR = path.dirname(HERE)
 DATA_DIR = path.join(PROJECT_DIR, 'data')
 
-SETTINGS = {'word_vec_source':path.join(DATA_DIR, 'GoogleNews-vectors-negative300.bin')}
+SETTINGS = {'word_vec_source':path.join(DATA_DIR, 'GoogleNews-vectors-negative300.bin'),
+            'default_db':'person2vec_database'
+           }
 
 
 class EmbeddingDataGenerator(object):
-    def __init__(self, word_vec_size, num_compare_entities):
+    def __init__(self, word_vec_size, num_compare_entities, db_name=SETTINGS['default_db']):
         self.word_vectors = KeyedVectors.load_word2vec_format(SETTINGS['word_vec_source'], binary=True)
-        self.handler = data_handler.DataHandler()
+        self.handler = data_handler.DataHandler(db_name)
         self.word_vec_size = word_vec_size
         self.num_compare_entities = num_compare_entities
         self.total_entity_count = self.handler.entity_count()
