@@ -182,6 +182,50 @@ def run_occupation_task(entities, embeds, truncate, data_gen, embed_size):
                 validation_data=(test_data, test_labels))
 
 
+def _multi_hot(row, category_index, length):
+    out = np.zeros(length)
+    for category in row:
+        out[category_index[category]] = 1.
+    return out
+
+
+def _convert_categories(entities):
+    rows = [row for row in entities.categories]
+    category_list = []
+    for row in rows:
+        for category in row:
+            if category not in category_list:
+                category_list.append(category)
+
+    category_index = {}
+    count = 0
+    for category in category_list:
+        category_index.update({category:count})
+        count += 1
+
+    num_categories = len(category_list)
+
+    entities.categories = entities.categories.apply(_multi_hot, args=(category_index, num_categories,))
+    labels_series = frame.categories.apply(pandas.Series)
+
+    return labels_series
+
+
+def run_biz_type_task(entities, embeds, data_gen, embed_size):
+    entities.columns = ['categories']
+    entities, embeds = _align_frames(entities, embeds)
+
+    entities = _convert_categories(entities)
+
+    labels = entities.values
+
+    num_train_examples = 7500
+    train_data = embeds[:num_train_examples].values
+    train_labels = labels[:num_train_examples]
+    test_data = embeds[num_train_examples:].values
+    test_labels = labels[num_train_examples:]
+
+
 def _run_tasks(tasks, entities, embeds, truncate, data_gen, embed_size):
     if 'gender' in tasks:
         to_drop = list(set(entities.columns) - set(['name','_id','gender']))
@@ -192,11 +236,14 @@ def _run_tasks(tasks, entities, embeds, truncate, data_gen, embed_size):
     if 'age' in tasks:
         to_drop = list(set(entities.columns) - set(['name','_id','birth_date']))
         run_age_task(entities.drop(to_drop, axis=1), embeds, truncate, data_gen, embed_size)
+    if 'biz_type' in tasks:
+        to_drop = list(set(entities.columns) - set(['_id','categories']))
+        run_biz_type_task(entities.drop(to_drop, axis=1), embeds, data_gen, embed_size)
 
 
-def _get_entities_from_db(handler):
+def _get_entities_from_db(handler, index='name'):
     entities = pandas.DataFrame.from_dict(handler.get_all_entities())
-    entities.set_index('name', inplace=True)
+    entities.set_index(index, inplace=True)
     return entities
 
 
@@ -218,15 +265,18 @@ def test_model(embedding_model, tasks=TASKS, data_gen=None, truncate=True, embed
 
 
 # same as test_model but runs on a set of embeddings passed as an array
-def test_embeddings(embeddings, tasks=TASKS, data_gen=None, truncate=True, embed_size=300):
-    handler = data_handler.DataHandler()
+def test_embeddings(embeddings, tasks=TASKS, data_gen=None, truncate=True, embed_size=300, db='person2vec_database'):
+    handler = data_handler.DataHandler(db)
 
     # can pass a training_data_generator to save time, but, if none is passed, create one
     if not data_gen:
         data_gen = training_data_generator.EmbeddingDataGenerator(300, 4)
 
     embeds = reassociate_embeds_with_ids(embeddings, data_gen)
-    entities = _get_entities_from_db(handler)
+    if biz_type in tasks:
+        entities = _get_entities_from_db(handler, '_id')
+    else:
+        entities = _get_entities_from_db(handler)
 
     _run_tasks(tasks, entities, embeds, truncate, data_gen)
 

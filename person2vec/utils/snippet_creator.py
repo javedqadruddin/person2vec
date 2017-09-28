@@ -5,6 +5,20 @@ from re import compile, sub, UNICODE
 # overlaps with the previous snippet and half with the next snippet
 SETTINGS = {'snippet_len':32, 'stride':16}
 
+def get_texts_length(texts):
+    text_length = 0
+    for text in texts:
+        text_length += len(text.split())
+    return text_length
+
+def get_longest_texts(handler):
+    top_length = 0
+    for entity in handler.get_entity_iterator():
+        text_length = get_texts_length(entity['texts'])
+        if text_length > top_length:
+            top_length = text_length
+    return top_length
+
 
 # removes punctuation from text and makes unicode-safe at same time
 def remove_punctuation(text):
@@ -44,27 +58,41 @@ def slice_into_snippets(text, snippet_len, sample_spacing):
     return subs
 
 
-def process_text(text, settings):
-    snippets = slice_into_snippets(text, settings['snippet_len'], settings['stride'])
+def process_text(text, settings, stride):
+    snippets = slice_into_snippets(text, settings['snippet_len'], stride)
     return snippets
 
+
+def get_max_snippets(longest_texts_length, settings):
+    max_stride = settings['stride']
+    return (longest_texts_length / max_stride)
+
+
+# figure out a stride for the current entity that makes it so this entity
+# gets roughly as many snippets made as the entity with most text in the db
+def get_stride(texts_length, entity_max_snippets):
+    # min and max force output to be in the rane 1..settings max stride
+    stride = int(max(texts_length / entity_max_snippets, 1))
+    return min(stride, SETTINGS['stride'])
 
 # there can be multiple texts saved in the db for each person
 # this function snippetizes each text in turn and returns a list of snippets
 # from all the texts
-def process_texts(texts, settings):
+def process_texts(texts, entity_max_snippets, settings):
     snippet_list = []
+    texts_length = get_texts_length(texts)
+    stride = get_stride(texts_length, entity_max_snippets)
     for text in texts:
         text = remove_punctuation(text)
         if len(text.split()) > 0:
-            snippets = process_text(text, settings)
+            snippets = process_text(text, settings, stride)
             for snippet in snippets:
                 snippet_list.append(snippet)
     return snippet_list
 
 
-def get_entity_snippets(entity, settings):
-    return process_texts(entity['texts'], settings)
+def get_entity_snippets(entity, entity_max_snippets, settings):
+    return process_texts(entity['texts'], entity_max_snippets, settings)
 
 
 def write_snippets(handler, entity, snippets):
@@ -79,10 +107,12 @@ def write_snippets(handler, entity, snippets):
 def snippetize_db(handler):
     num_entities = handler.entity_count()
     count = 0
+    longest_texts_length = get_longest_texts(handler)
+    entity_max_snippets = get_max_snippets(longest_texts_length, SETTINGS)
     for entity in handler.get_entity_iterator():
         # if to make sure there actually are some texts for this entity
         if len(entity['texts']) > 0:
             count += 1
-            snippets = get_entity_snippets(entity, SETTINGS)
+            snippets = get_entity_snippets(entity, entity_max_snippets, SETTINGS)
             print("writing snippets for " + entity['_id'] + " number " + str(count) + " of " + str(num_entities))
             write_snippets(handler, entity, snippets)
