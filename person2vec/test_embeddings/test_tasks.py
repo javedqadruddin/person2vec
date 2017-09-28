@@ -219,7 +219,7 @@ def run_biz_type_task(entities, embeds, data_gen, embed_size):
 
     labels = entities.values
 
-    num_train_examples = 7500
+    num_train_examples = 2300
     train_data = embeds[:num_train_examples].values
     train_labels = labels[:num_train_examples]
     test_data = embeds[num_train_examples:].values

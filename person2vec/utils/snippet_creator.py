@@ -3,7 +3,7 @@ from re import compile, sub, UNICODE
 
 # will get a 32 word-long snippet every 16 words, half of each snippet
 # overlaps with the previous snippet and half with the next snippet
-SETTINGS = {'snippet_len':32, 'stride':16}
+SETTINGS = {'snippet_len':32, 'stride':16, 'max_expand':4000}
 
 def get_texts_length(texts):
     text_length = 0
@@ -91,7 +91,8 @@ def process_texts(texts, entity_max_snippets, settings):
     text = remove_punctuation(text)
     if len(text.split()) > 0:
         snippets = process_text(text, settings, stride)
-        while len(snippets) < entity_max_snippets:
+        # so all entities will have same number of snippets, unless too massive
+        while len(snippets) < min(entity_max_snippets, SETTINGS['max_expand']):
             snippets = snippets * 2
         snippets = snippets[:entity_max_snippets]
         for snippet in snippets:

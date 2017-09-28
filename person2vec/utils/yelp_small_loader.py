@@ -15,7 +15,7 @@ def load_businesses(handler):
             handler.update_entity({'_id':line_json['_id']}, 'embed_num', count)
             count += 1
             print('inserted business number ' + str(count))
-            if count > 9999:
+            if count > 2999:
                 break
 
 def load_reviews(business_handler):
