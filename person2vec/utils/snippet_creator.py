@@ -63,9 +63,12 @@ def process_text(text, settings, stride):
     return snippets
 
 
-def get_max_snippets(longest_texts_length, settings):
-    max_stride = settings['stride']
-    return (longest_texts_length / max_stride)
+def get_max_snippets(longest_texts_length, max_stride):
+    return int(longest_texts_length / max_stride)
+
+
+def concat_all_texts(texts):
+    return " ".join(texts)
 
 
 # figure out a stride for the current entity that makes it so this entity
@@ -82,12 +85,17 @@ def process_texts(texts, entity_max_snippets, settings):
     snippet_list = []
     texts_length = get_texts_length(texts)
     stride = get_stride(texts_length, entity_max_snippets)
-    for text in texts:
-        text = remove_punctuation(text)
-        if len(text.split()) > 0:
-            snippets = process_text(text, settings, stride)
-            for snippet in snippets:
-                snippet_list.append(snippet)
+
+    text = concat_all_texts(texts)
+
+    text = remove_punctuation(text)
+    if len(text.split()) > 0:
+        snippets = process_text(text, settings, stride)
+        while len(snippets) < entity_max_snippets:
+            snippets = snippets * 2
+        snippets = snippets[:entity_max_snippets]
+        for snippet in snippets:
+            snippet_list.append(snippet)
     return snippet_list
 
 
@@ -108,11 +116,11 @@ def snippetize_db(handler):
     num_entities = handler.entity_count()
     count = 0
     longest_texts_length = get_longest_texts(handler)
-    entity_max_snippets = get_max_snippets(longest_texts_length, SETTINGS)
+    entity_max_snippets = get_max_snippets(longest_texts_length, SETTINGS['stride'])
     for entity in handler.get_entity_iterator():
         # if to make sure there actually are some texts for this entity
         if len(entity['texts']) > 0:
             count += 1
             snippets = get_entity_snippets(entity, entity_max_snippets, SETTINGS)
-            print("writing snippets for " + entity['_id'] + " number " + str(count) + " of " + str(num_entities))
+            print("writing snippets for " + str(entity['_id']) + " number " + str(count) + " of " + str(num_entities))
             write_snippets(handler, entity, snippets)

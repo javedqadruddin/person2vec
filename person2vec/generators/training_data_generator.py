@@ -1,6 +1,7 @@
 # python generator yielding training data according to settings
 # TODO: implement this with a keras.utils.data_utils.Sequence() to take advantage
 # fit_generator(use_multiprocessing=True)
+# alternate db name yelp_business_database_small
 
 from gensim.models import KeyedVectors
 from numpy.random import shuffle as rand_shuffle

@@ -59,6 +59,7 @@ def train_model(model=None,
                 embed_size=DEFAULT_SETTINGS['embedding_size'],
                 word_vec_size=DEFAULT_SETTINGS['word_vec_size'],
                 data_gen= None,
+                batch_size=32,
                 num_compare_entities=DEFAULT_SETTINGS['num_compare_entities']):
 
     # if a data_gen is passed in, get variables from it, if not, create a data_gen
@@ -74,7 +75,7 @@ def train_model(model=None,
     if not model:
         model = _build_default_model(num_compare_entities=num_compare_entities, word_vec_size=word_vec_size)
 
-    gen = data_gen.flow_from_db()
+    gen = data_gen.flow_from_db(batch_size)
 
     model.fit_generator(gen, steps_per_epoch=steps_per_epoch, epochs=epochs, verbose=1)
 
