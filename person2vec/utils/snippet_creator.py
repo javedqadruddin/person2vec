@@ -3,7 +3,7 @@ from re import compile, sub, UNICODE
 
 # will get a 32 word-long snippet every 16 words, half of each snippet
 # overlaps with the previous snippet and half with the next snippet
-SETTINGS = {'snippet_len':32, 'stride':16, 'max_expand':4000}
+SETTINGS = {'snippet_len':32, 'stride':16, 'max_expand':2000}
 
 def get_texts_length(texts):
     text_length = 0
@@ -64,7 +64,7 @@ def process_text(text, settings, stride):
 
 
 def get_max_snippets(longest_texts_length, max_stride):
-    return int(longest_texts_length / max_stride)
+    return min(SETTINGS['max_expand'],int(longest_texts_length / max_stride))
 
 
 def concat_all_texts(texts):
@@ -92,7 +92,7 @@ def process_texts(texts, entity_max_snippets, settings):
     if len(text.split()) > 0:
         snippets = process_text(text, settings, stride)
         # so all entities will have same number of snippets, unless too massive
-        while len(snippets) < min(entity_max_snippets, SETTINGS['max_expand']):
+        while len(snippets) < entity_max_snippets:
             snippets = snippets * 2
         snippets = snippets[:entity_max_snippets]
         for snippet in snippets:

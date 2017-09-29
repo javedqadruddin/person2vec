@@ -66,6 +66,10 @@ class DataHandler(object):
     def get_snippet(self, query):
         return self.snippets_collection.find_one(query)
 
+    def get_snippets(self, query):
+        return [snippet for snippet in self.snippets_collection.find(query)]
+
+
     # returns an iterator over all entities matching query
     def get_entity_iterator(self, query=None):
         return self.entities_collection.find(query)

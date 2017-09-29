@@ -38,7 +38,7 @@ def _build_default_model(num_compare_entities=DEFAULT_SETTINGS['num_compare_enti
     joint_embeds = Concatenate(name='joint_embeds')([word_branch, entity_embedding_layer])
 
     nex = Dropout(0.)(joint_embeds)
-    nex = Dense(100, activation="relu", name='dense_consolidator')(nex)
+    nex = Dense(1000, activation="relu", name='dense_consolidator')(nex)
     nex = Dropout(0.)(nex)
     full_out = Dense (num_compare_entities, activation='softmax', name='final_output')(nex)
 
@@ -73,6 +73,7 @@ def train_model(model=None,
                                             num_compare_entities=num_compare_entities)
 
     if not model:
+        print('hello')
         model = _build_default_model(num_compare_entities=num_compare_entities, word_vec_size=word_vec_size)
 
     gen = data_gen.flow_from_db(batch_size)

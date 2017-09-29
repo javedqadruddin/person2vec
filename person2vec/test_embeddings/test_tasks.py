@@ -57,7 +57,8 @@ def _truncate_list(entities, data_gen):
 
 def _align_frames(entities, embeds):
     # names no longer needed, so set the index to the _id value, which automatically drops the names (which were the index previously)
-    entities.set_index('_id', inplace=True)
+    if entities.index.name != '_id':
+        entities.set_index('_id', inplace=True)
 
     # removes entries from embeds that are not in entities (this will occur if entities has been truncated)
     embeds = embeds.drop([id for id in embeds.index.values if id not in entities.index])
@@ -206,16 +207,16 @@ def _convert_categories(entities):
     num_categories = len(category_list)
 
     entities.categories = entities.categories.apply(_multi_hot, args=(category_index, num_categories,))
-    labels_series = frame.categories.apply(pandas.Series)
+    labels_series = entities.categories.apply(pandas.Series)
 
-    return labels_series
+    return labels_series, category_list
 
 
 def run_biz_type_task(entities, embeds, data_gen, embed_size):
     entities.columns = ['categories']
     entities, embeds = _align_frames(entities, embeds)
 
-    entities = _convert_categories(entities)
+    entities, category_list = _convert_categories(entities)
 
     labels = entities.values
 
@@ -225,6 +226,15 @@ def run_biz_type_task(entities, embeds, data_gen, embed_size):
     test_data = embeds[num_train_examples:].values
     test_labels = labels[num_train_examples:]
 
+    # TODO: probably make this a separate model constructor function
+    model = Sequential([Dense(len(category_list), input_shape=(embed_size,), activation='sigmoid'),])
+    model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
+    model.fit(train_data, train_labels,
+                verbose=1,
+                epochs=90,
+                validation_data=(test_data, test_labels))
+
+    return model, category_list
 
 def _run_tasks(tasks, entities, embeds, truncate, data_gen, embed_size):
     if 'gender' in tasks:
@@ -238,8 +248,8 @@ def _run_tasks(tasks, entities, embeds, truncate, data_gen, embed_size):
         run_age_task(entities.drop(to_drop, axis=1), embeds, truncate, data_gen, embed_size)
     if 'biz_type' in tasks:
         to_drop = list(set(entities.columns) - set(['_id','categories']))
-        run_biz_type_task(entities.drop(to_drop, axis=1), embeds, data_gen, embed_size)
-
+        return run_biz_type_task(entities.drop(to_drop, axis=1), embeds, data_gen, embed_size)
+    return 'this task has nothing to return'
 
 def _get_entities_from_db(handler, index='name'):
     entities = pandas.DataFrame.from_dict(handler.get_all_entities())
@@ -249,8 +259,8 @@ def _get_entities_from_db(handler, index='name'):
 
 # input a model containing an embedding layer, tests will then be run on the embeddings
 # when truncate = True, it will test only on the entities for which word2vec word vectors exist
-def test_model(embedding_model, tasks=TASKS, data_gen=None, truncate=True, embed_size=300):
-    handler = data_handler.DataHandler()
+def test_model(embedding_model, tasks=TASKS, data_gen=None, truncate=True, embed_size=300, db='person2vec_database'):
+    handler = data_handler.DataHandler(db)
 
     # can pass a training_data_generator to save time, but, if none is passed, create one
     if not data_gen:
@@ -259,9 +269,13 @@ def test_model(embedding_model, tasks=TASKS, data_gen=None, truncate=True, embed
 
     raw_embeds = get_embed_weights_from_model(embedding_model)
     embeds = reassociate_embeds_with_ids(raw_embeds, data_gen)
-    entities = _get_entities_from_db(handler)
 
-    _run_tasks(tasks, entities, embeds, truncate, data_gen, embed_size)
+    if 'biz_type' in tasks:
+        entities = _get_entities_from_db(handler, '_id')
+    else:
+        entities = _get_entities_from_db(handler)
+
+    return _run_tasks(tasks, entities, embeds, truncate, data_gen, embed_size)
 
 
 # same as test_model but runs on a set of embeddings passed as an array
@@ -273,7 +287,7 @@ def test_embeddings(embeddings, tasks=TASKS, data_gen=None, truncate=True, embed
         data_gen = training_data_generator.EmbeddingDataGenerator(300, 4)
 
     embeds = reassociate_embeds_with_ids(embeddings, data_gen)
-    if biz_type in tasks:
+    if 'biz_type' in tasks:
         entities = _get_entities_from_db(handler, '_id')
     else:
         entities = _get_entities_from_db(handler)
