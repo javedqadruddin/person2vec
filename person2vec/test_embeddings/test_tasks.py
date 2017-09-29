@@ -10,7 +10,7 @@ from keras import optimizers
 from person2vec import data_handler
 from person2vec.generators import training_data_generator
 
-TASKS=['gender', 'occupation', 'age']
+TASKS=['gender', 'occupation', 'age', 'political_party']
 
 
 # grabs the embedding from the embedding matrix with index corresponding to num
@@ -61,7 +61,7 @@ def _align_frames(entities, embeds):
         entities.set_index('_id', inplace=True)
 
     # removes entries from embeds that are not in entities (this will occur if entities has been truncated)
-    embeds = embeds.drop([id for id in embeds.index.values if id not in entities.index])
+    embeds = embeds.drop([i for i in embeds.index.values if i not in entities.index])
 
     # sort them so training input and corresponding outputs will be in same order
     embeds.sort_index(inplace=True)
@@ -70,8 +70,8 @@ def _align_frames(entities, embeds):
     return entities, embeds
 
 
-def _split_train_test(embeds, labels):
-    num_train_examples = 750
+def _split_train_test(embeds, labels, num_examples=1000):
+    num_train_examples = int(0.75 * num_examples)
     train_data = embeds[:num_train_examples].values
     train_labels = labels[:num_train_examples]
     test_data = embeds[num_train_examples:].values
@@ -96,6 +96,8 @@ def _to_yrs_since(time_str):
 
 
 def run_age_task(entities, embeds, truncate, data_gen, embed_size):
+    print('================TESTING AGE===============================')
+
     entities.columns = ['_id', 'birth_date']
 
     # removes any entities for which there is no word2vec embedding for comparison
@@ -125,7 +127,42 @@ def run_age_task(entities, embeds, truncate, data_gen, embed_size):
                 validation_data=(test_data, test_labels))
 
 
+def run_party_task(entities, embeds, truncate, data_gen, embed_size):
+    print('================TESTING POLITICAL PARTY===============================')
+
+    # entities dataframe contains id column as index and gender column as 'male'/'female'
+    entities.columns = ['_id', 'political_party']
+
+    # removes any entities for which there is no word2vec embedding for comparison
+    if truncate:
+        entities = _truncate_list(entities, data_gen)
+
+    # cleaning data with no party
+    entities = entities[entities.political_party != 'unknown']
+
+    entities, embeds = _align_frames(entities, embeds)
+
+    # replace parties with one-hot encoding
+    entities = pandas.get_dummies(entities.political_party)
+
+    # get the raw y vector for training
+    one_hot_parties = entities.values
+
+
+    train_data, train_labels, test_data, test_labels = _split_train_test(embeds, one_hot_parties, len(entities))
+
+    # TODO: probably make this a separate model constructor function
+    model = Sequential([Dense(len(one_hot_parties[0]), input_shape=(embed_size,), activation='sigmoid'),])
+    model.compile(optimizer='adam', loss='mean_squared_error', metrics=['accuracy'])
+    model.fit(train_data, train_labels,
+                verbose=1,
+                epochs=90,
+                validation_data=(test_data, test_labels))
+
+
 def run_gender_task(entities, embeds, truncate, data_gen, embed_size):
+    print('================TESTING GENDER===============================')
+
     # entities dataframe contains id column as index and gender column as 'male'/'female'
     entities.columns = ['_id', 'gender']
 
@@ -155,6 +192,7 @@ def run_gender_task(entities, embeds, truncate, data_gen, embed_size):
 
 
 def run_occupation_task(entities, embeds, truncate, data_gen, embed_size):
+    print('================TESTING OCCUPATION===============================')
     entities.columns = ['_id', 'occupation']
 
     # removes any entities for which there is no word2vec embedding for comparison
@@ -213,6 +251,7 @@ def _convert_categories(entities):
 
 
 def run_biz_type_task(entities, embeds, data_gen, embed_size):
+    print('================TESTING BUSINESS CATEGORY===============================')
     entities.columns = ['categories']
     entities, embeds = _align_frames(entities, embeds)
 
@@ -246,6 +285,9 @@ def _run_tasks(tasks, entities, embeds, truncate, data_gen, embed_size):
     if 'age' in tasks:
         to_drop = list(set(entities.columns) - set(['name','_id','birth_date']))
         run_age_task(entities.drop(to_drop, axis=1), embeds, truncate, data_gen, embed_size)
+    if 'political_party' in tasks:
+        to_drop = list(set(entities.columns) - set(['name','_id','political_party']))
+        run_party_task(entities.drop(to_drop, axis=1), embeds, truncate, data_gen, embed_size)
     if 'biz_type' in tasks:
         to_drop = list(set(entities.columns) - set(['_id','categories']))
         return run_biz_type_task(entities.drop(to_drop, axis=1), embeds, data_gen, embed_size)
@@ -306,8 +348,11 @@ def _associate_names_with_word_vecs(entities, data_gen):
         wordvecs_dict.update({name:_get_word2vec_vector(name,data_gen)})
     return pandas.DataFrame.from_dict(wordvecs_dict, orient='index')
 
+def _get_id_for_name(name, handler):
+    return handler.get_entity({'name':name})['_id']
 
-def test_word2vec(word2vec_object, tasks=TASKS, data_gen=None):
+
+def test_word2vec(word2vec_object, tasks=TASKS, data_gen=None, embed_size=300):
     handler = data_handler.DataHandler()
 
     # can pass a training_data_generator to save time, but, if none is passed, create one
@@ -317,5 +362,9 @@ def test_word2vec(word2vec_object, tasks=TASKS, data_gen=None):
     entities = _get_entities_from_db(handler)
     entities = entities.drop([name for name in entities.index.values if _name_not_has_vec(name, data_gen)])
     word_vecs = _associate_names_with_word_vecs(entities, data_gen)
+    word_vecs.reset_index(inplace=True)
+    word_vecs['_id'] = pandas.Series([_get_id_for_name(name, handler) for name in word_vecs['index']])
+    word_vecs.set_index('index', inplace=True)
+    word_vecs.set_index('_id', inplace=True)
 
-    _run_tasks(tasks=tasks, entities=entities, embeds=word_vecs, data_gen=data_gen, truncate=False)
+    _run_tasks(tasks=tasks, entities=entities, embeds=word_vecs, data_gen=data_gen, truncate=False, embed_size=embed_size)
