@@ -11,12 +11,12 @@ def get_chosen_categories(preds, category_list):
 
 
 def get_yelp_category_results(model, test_model, category_list, db_handler,
-                            data_gen, threshold=0.15):
+                            data_gen, embed_size, threshold=0.15):
     embeds = test_tasks.get_embed_weights_from_model(model)
     ids_embeds = test_tasks.reassociate_embeds_with_ids(embeds, data_gen=data_gen)
     chosen_and_correct_categories = []
     for row in ids_embeds.iterrows():#range(0, len(ids_embeds)):
-        preds = test_model.predict(reshape(row[1], (1, 1000)))
+        preds = test_model.predict(reshape(row[1], (1, embed_size)))
         preds[preds>=threshold] = 1
         preds[preds<threshold] = 0
         chosen_categories = get_chosen_categories(preds, category_list)
@@ -48,7 +48,7 @@ def get_precision_recall(results):
 
 
 def evaluate_yelp_category_results(model, test_model, category_list,
-                                db_handler, data_gen, threshold=0.15):
+                                db_handler, data_gen, embed_size, threshold=0.15):
     results = get_yelp_category_results(model, test_model, category_list,
                                             db_handler, data_gen, threshold)
     precision, recall = get_precision_recall(results)
