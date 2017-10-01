@@ -302,7 +302,7 @@ def run_biz_type_task(entities, embeds, data_gen, embed_size):
                 epochs=90,
                 validation_data=(test_data, test_labels))
 
-    return model, category_list
+    return model, category_list, len(train_data)
 
 def _run_tasks(tasks, entities, embeds, truncate, data_gen, embed_size):
     if 'gender' in tasks:

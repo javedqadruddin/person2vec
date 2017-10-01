@@ -49,9 +49,10 @@ def get_precision_recall(results):
 
 
 def evaluate_yelp_category_results(model, test_model, category_list,
-                                db_handler, data_gen, embed_size, threshold=0.15):
+                                db_handler, data_gen, embed_size,
+                                num_train_examples, threshold=0.15):
     results = get_yelp_category_results(model, test_model, category_list,
                                             db_handler, data_gen, embed_size, threshold)
-    precision, recall = get_precision_recall(results[2300:])
+    precision, recall = get_precision_recall(results[num_train_examples:])
 
     return {'precision':precision, 'recall':recall}
