@@ -228,7 +228,32 @@ def _multi_hot(row, category_index, length):
     return out
 
 
+def _get_top_categories(rows):
+    category_tally_list = []
+    for row in rows:
+        for category in row:
+            category_tally_list.append(category)
+    category_tally_series = pandas.Series(category_tally_list)
+    return list(category_tally_series.value_counts()[:10].index)
+
+
+def _scrub_non_top(categories, top_categories):
+    return [category for category in categories if category in top_categories]
+
+
+def _get_rid_of_small_categories(entities):
+    rows = [row for row in entities.categories]
+    top_categories = _get_top_categories(rows)
+    entities.categories = entities.categories.apply(_scrub_non_top, args=([top_categories]))
+    # puts nan into any row with an empty list in category column
+    entities.categories = entities.categories[entities.categories.apply(len) > 0]
+    # drops all rows that have a nan
+    entities.dropna(axis=0, inplace=True)
+    return entities
+
+
 def _convert_categories(entities):
+    entities = _get_rid_of_small_categories(entities)
     rows = [row for row in entities.categories]
     category_list = []
     for row in rows:
@@ -253,17 +278,21 @@ def _convert_categories(entities):
 def run_biz_type_task(entities, embeds, data_gen, embed_size):
     print('================TESTING BUSINESS CATEGORY===============================')
     entities.columns = ['categories']
-    entities, embeds = _align_frames(entities, embeds)
 
     entities, category_list = _convert_categories(entities)
+    entities, embeds = _align_frames(entities, embeds)
+
 
     labels = entities.values
 
-    num_train_examples = 2300
-    train_data = embeds[:num_train_examples].values
-    train_labels = labels[:num_train_examples]
-    test_data = embeds[num_train_examples:].values
-    test_labels = labels[num_train_examples:]
+    train_data, train_labels, test_data, test_labels = _split_train_test(embeds, labels, len(labels))
+
+
+    # num_train_examples = 2300
+    # train_data = embeds[:num_train_examples].values
+    # train_labels = labels[:num_train_examples]
+    # test_data = embeds[num_train_examples:].values
+    # test_labels = labels[num_train_examples:]
 
     # TODO: probably make this a separate model constructor function
     model = Sequential([Dense(len(category_list), input_shape=(embed_size,), activation='sigmoid'),])
