@@ -121,10 +121,11 @@ def run_age_task(entities, embeds, truncate, data_gen, embed_size):
     model = Sequential([Dense(1, input_shape=(embed_size,), activation='linear'),])
     opt = optimizers.Adam(lr=0.02)
     model.compile(optimizer=opt, loss='mean_squared_error', metrics=['accuracy'])
-    model.fit(train_data, train_labels,
+    history = model.fit(train_data, train_labels,
                 verbose=1,
                 epochs=500,
                 validation_data=(test_data, test_labels))
+    return history
 
 
 def run_party_task(entities, embeds, truncate, data_gen, embed_size):
@@ -154,10 +155,11 @@ def run_party_task(entities, embeds, truncate, data_gen, embed_size):
     # TODO: probably make this a separate model constructor function
     model = Sequential([Dense(len(one_hot_parties[0]), input_shape=(embed_size,), activation='sigmoid'),])
     model.compile(optimizer='adam', loss='mean_squared_error', metrics=['accuracy'])
-    model.fit(train_data, train_labels,
+    history = model.fit(train_data, train_labels,
                 verbose=1,
                 epochs=90,
                 validation_data=(test_data, test_labels))
+    return history
 
 
 def run_gender_task(entities, embeds, truncate, data_gen, embed_size):
@@ -185,10 +187,11 @@ def run_gender_task(entities, embeds, truncate, data_gen, embed_size):
     # TODO: probably make this a separate model constructor function
     model = Sequential([Dense(1, input_shape=(embed_size,), activation='sigmoid'),])
     model.compile(optimizer='adam', loss='mean_squared_error', metrics=['accuracy'])
-    model.fit(train_data, train_labels,
+    history = model.fit(train_data, train_labels,
                 verbose=1,
                 epochs=90,
                 validation_data=(test_data, test_labels))
+    return history
 
 
 def run_occupation_task(entities, embeds, truncate, data_gen, embed_size):
@@ -215,10 +218,11 @@ def run_occupation_task(entities, embeds, truncate, data_gen, embed_size):
     # TODO: probably make this a separate model constructor function
     model = Sequential([Dense(4, input_shape=(embed_size,), activation='softmax'),])
     model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
-    model.fit(train_data, train_labels,
+    history = model.fit(train_data, train_labels,
                 verbose=1,
                 epochs=90,
                 validation_data=(test_data, test_labels))
+    return history
 
 
 def _multi_hot(row, category_index, length):
@@ -246,9 +250,9 @@ def _get_rid_of_small_categories(entities):
     top_categories = _get_top_categories(rows)
     entities.categories = entities.categories.apply(_scrub_non_top, args=([top_categories]))
     # puts nan into any row with an empty list in category column
-    entities.categories = entities.categories[entities.categories.apply(len) > 0]
+   # entities.categories = entities.categories[entities.categories.apply(len) > 0]
     # drops all rows that have a nan
-    entities.dropna(axis=0, inplace=True)
+   # entities.dropna(axis=0, inplace=True)
     return entities
 
 
@@ -305,22 +309,23 @@ def run_biz_type_task(entities, embeds, data_gen, embed_size):
     return model, category_list, len(train_data)
 
 def _run_tasks(tasks, entities, embeds, truncate, data_gen, embed_size):
+    histories = {}
     if 'gender' in tasks:
         to_drop = list(set(entities.columns) - set(['name','_id','gender']))
-        run_gender_task(entities.drop(to_drop, axis=1), embeds, truncate, data_gen, embed_size)
+        histories['gender'] = run_gender_task(entities.drop(to_drop, axis=1), embeds, truncate, data_gen, embed_size)
     if 'occupation' in tasks:
         to_drop = list(set(entities.columns) - set(['name','_id','occupation']))
-        run_occupation_task(entities.drop(to_drop, axis=1), embeds, truncate, data_gen, embed_size)
+        histories['occupation'] = run_occupation_task(entities.drop(to_drop, axis=1), embeds, truncate, data_gen, embed_size)
     if 'age' in tasks:
         to_drop = list(set(entities.columns) - set(['name','_id','birth_date']))
-        run_age_task(entities.drop(to_drop, axis=1), embeds, truncate, data_gen, embed_size)
+        histories['age'] = run_age_task(entities.drop(to_drop, axis=1), embeds, truncate, data_gen, embed_size)
     if 'political_party' in tasks:
         to_drop = list(set(entities.columns) - set(['name','_id','political_party']))
-        run_party_task(entities.drop(to_drop, axis=1), embeds, truncate, data_gen, embed_size)
+        histories['political_party'] = run_party_task(entities.drop(to_drop, axis=1), embeds, truncate, data_gen, embed_size)
     if 'biz_type' in tasks:
         to_drop = list(set(entities.columns) - set(['_id','categories']))
         return run_biz_type_task(entities.drop(to_drop, axis=1), embeds, data_gen, embed_size)
-    return 'this task has nothing to return'
+    return histories
 
 def _get_entities_from_db(handler, index='name'):
     entities = pandas.DataFrame.from_dict(handler.get_all_entities())

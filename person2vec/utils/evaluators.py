@@ -22,6 +22,8 @@ def get_yelp_category_results(model, test_model, category_list, db_handler,
         preds[preds<threshold] = 0
         chosen_categories = get_chosen_categories(preds, category_list)
         correct_categories = db_handler.get_entity({'_id':row[0]})['categories']
+        # removes categories that are not in the set of categories we're testing
+        correct_categories = test_tasks._scrub_non_top(correct_categories, category_list)
         chosen_and_correct_categories.append((chosen_categories, correct_categories))
     return chosen_and_correct_categories
 
