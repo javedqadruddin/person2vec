@@ -73,7 +73,6 @@ def train_model(model=None,
                                             num_compare_entities=num_compare_entities)
 
     if not model:
-        print('hello')
         model = _build_default_model(num_compare_entities=num_compare_entities, word_vec_size=word_vec_size)
 
     gen = data_gen.flow_from_db(batch_size)
