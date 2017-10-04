@@ -27,19 +27,15 @@ def _build_default_model(num_compare_entities=DEFAULT_SETTINGS['num_compare_enti
     input_tensor_entity = Input(shape=(num_compare_entities,), dtype='int32', name='entity_input')
 
     word_flatten_layer = Flatten()(input_tensor_words)
-    word_dropout_layer = Dropout(0.)(word_flatten_layer)
 
     entity_embedding_layer = Embedding(num_total_entities, embedding_size, input_length=num_compare_entities, name='entity_embedding')(input_tensor_entity)
     entity_embedding_layer = Flatten()(entity_embedding_layer)
-    entity_embedding_layer = Dropout(0.)(entity_embedding_layer)
 
-    word_branch = Dense(1000, activation="relu", name='dense_sentence_layer')(word_dropout_layer)
+    word_branch = Dense(1000, activation="relu", name='dense_sentence_layer')(word_flatten_layer)
 
     joint_embeds = Concatenate(name='joint_embeds')([word_branch, entity_embedding_layer])
 
-    nex = Dropout(0.)(joint_embeds)
-    nex = Dense(1000, activation="relu", name='dense_consolidator')(nex)
-    nex = Dropout(0.)(nex)
+    nex = Dense(1000, activation="relu", name='dense_consolidator')(joint_embeds)
     full_out = Dense (num_compare_entities, activation='softmax', name='final_output')(nex)
 
     model = Model([input_tensor_words, input_tensor_entity], full_out)
