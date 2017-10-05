@@ -95,7 +95,7 @@ def _to_yrs_since(time_str):
     return delta.days / 365.0
 
 
-def run_age_task(entities, embeds, truncate, data_gen, embed_size):
+def run_age_task(entities, embeds, truncate, data_gen, embed_size, callbacks):
     print('================TESTING AGE===============================')
 
     entities.columns = ['_id', 'birth_date']
@@ -124,11 +124,12 @@ def run_age_task(entities, embeds, truncate, data_gen, embed_size):
     history = model.fit(train_data, train_labels,
                 verbose=1,
                 epochs=500,
-                validation_data=(test_data, test_labels))
+                validation_data=(test_data, test_labels),
+                callbacks=callbacks)
     return history
 
 
-def run_party_task(entities, embeds, truncate, data_gen, embed_size):
+def run_party_task(entities, embeds, truncate, data_gen, embed_size, callbacks):
     print('================TESTING POLITICAL PARTY===============================')
 
     # entities dataframe contains id column as index and gender column as 'male'/'female'
@@ -158,11 +159,12 @@ def run_party_task(entities, embeds, truncate, data_gen, embed_size):
     history = model.fit(train_data, train_labels,
                 verbose=1,
                 epochs=90,
-                validation_data=(test_data, test_labels))
+                validation_data=(test_data, test_labels),
+                callbacks=callbacks)
     return history
 
 
-def run_gender_task(entities, embeds, truncate, data_gen, embed_size):
+def run_gender_task(entities, embeds, truncate, data_gen, embed_size, callbacks):
     print('================TESTING GENDER===============================')
 
     # entities dataframe contains id column as index and gender column as 'male'/'female'
@@ -190,11 +192,12 @@ def run_gender_task(entities, embeds, truncate, data_gen, embed_size):
     history = model.fit(train_data, train_labels,
                 verbose=1,
                 epochs=90,
-                validation_data=(test_data, test_labels))
+                validation_data=(test_data, test_labels),
+                callbacks=callbacks)
     return history
 
 
-def run_occupation_task(entities, embeds, truncate, data_gen, embed_size):
+def run_occupation_task(entities, embeds, truncate, data_gen, embed_size, callbacks):
     print('================TESTING OCCUPATION===============================')
     entities.columns = ['_id', 'occupation']
 
@@ -221,7 +224,8 @@ def run_occupation_task(entities, embeds, truncate, data_gen, embed_size):
     history = model.fit(train_data, train_labels,
                 verbose=1,
                 epochs=90,
-                validation_data=(test_data, test_labels))
+                validation_data=(test_data, test_labels),
+                callbacks=callbacks)
     return history
 
 
@@ -279,7 +283,7 @@ def _convert_categories(entities):
     return labels_series, category_list
 
 
-def run_biz_type_task(entities, embeds, data_gen, embed_size):
+def run_biz_type_task(entities, embeds, data_gen, embed_size, callbacks):
     print('================TESTING BUSINESS CATEGORY===============================')
     entities.columns = ['categories']
 
@@ -304,27 +308,28 @@ def run_biz_type_task(entities, embeds, data_gen, embed_size):
     model.fit(train_data, train_labels,
                 verbose=1,
                 epochs=90,
-                validation_data=(test_data, test_labels))
+                validation_data=(test_data, test_labels),
+                callbacks=callbacks)
 
     return model, category_list, len(train_data)
 
-def _run_tasks(tasks, entities, embeds, truncate, data_gen, embed_size):
+def _run_tasks(tasks, entities, embeds, truncate, data_gen, embed_size, callbacks):
     histories = {}
     if 'gender' in tasks:
         to_drop = list(set(entities.columns) - set(['name','_id','gender']))
-        histories['gender'] = run_gender_task(entities.drop(to_drop, axis=1), embeds, truncate, data_gen, embed_size)
+        histories['gender'] = run_gender_task(entities.drop(to_drop, axis=1), embeds, truncate, data_gen, embed_size, callbacks)
     if 'occupation' in tasks:
         to_drop = list(set(entities.columns) - set(['name','_id','occupation']))
-        histories['occupation'] = run_occupation_task(entities.drop(to_drop, axis=1), embeds, truncate, data_gen, embed_size)
+        histories['occupation'] = run_occupation_task(entities.drop(to_drop, axis=1), embeds, truncate, data_gen, embed_size, callbacks)
     if 'age' in tasks:
         to_drop = list(set(entities.columns) - set(['name','_id','birth_date']))
-        histories['age'] = run_age_task(entities.drop(to_drop, axis=1), embeds, truncate, data_gen, embed_size)
+        histories['age'] = run_age_task(entities.drop(to_drop, axis=1), embeds, truncate, data_gen, embed_size, callbacks)
     if 'political_party' in tasks:
         to_drop = list(set(entities.columns) - set(['name','_id','political_party']))
-        histories['political_party'] = run_party_task(entities.drop(to_drop, axis=1), embeds, truncate, data_gen, embed_size)
+        histories['political_party'] = run_party_task(entities.drop(to_drop, axis=1), embeds, truncate, data_gen, embed_size, callbacks)
     if 'biz_type' in tasks:
         to_drop = list(set(entities.columns) - set(['_id','categories']))
-        return run_biz_type_task(entities.drop(to_drop, axis=1), embeds, data_gen, embed_size)
+        return run_biz_type_task(entities.drop(to_drop, axis=1), embeds, data_gen, embed_size, callbacks)
     return histories
 
 def _get_entities_from_db(handler, index='name'):
@@ -335,7 +340,7 @@ def _get_entities_from_db(handler, index='name'):
 
 # input a model containing an embedding layer, tests will then be run on the embeddings
 # when truncate = True, it will test only on the entities for which word2vec word vectors exist
-def test_model(embedding_model, tasks=TASKS, data_gen=None, truncate=True, embed_size=300, db='person2vec_database'):
+def test_model(embedding_model, tasks=TASKS, data_gen=None, truncate=True, embed_size=300, db='person2vec_database', callbacks=[]):
     handler = data_handler.DataHandler(db)
 
     # can pass a training_data_generator to save time, but, if none is passed, create one
@@ -351,7 +356,7 @@ def test_model(embedding_model, tasks=TASKS, data_gen=None, truncate=True, embed
     else:
         entities = _get_entities_from_db(handler)
 
-    return _run_tasks(tasks, entities, embeds, truncate, data_gen, embed_size)
+    return _run_tasks(tasks, entities, embeds, truncate, data_gen, embed_size, callbacks)
 
 
 # same as test_model but runs on a set of embeddings passed as an array
