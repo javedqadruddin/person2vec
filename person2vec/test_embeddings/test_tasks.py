@@ -7,6 +7,7 @@ from keras.models import Sequential
 from keras.layers import Dense
 from keras import optimizers
 
+from person2vec.utils import tools
 from person2vec import data_handler
 from person2vec.generators import training_data_generator
 
@@ -16,31 +17,6 @@ TASKS=['gender', 'occupation', 'age', 'political_party']
 # grabs the embedding from the embedding matrix with index corresponding to num
 def _get_entity_vec(num, embeds):
     return embeds[0][num]
-
-
-# goes faster if a data generator is passed in because initialization steps can then be skipped
-def reassociate_embeds_with_ids(embeds, data_gen=None):
-    # the numbers that stand for entities that were fed to the embedding layer
-    # entity_dict contains the entity id to number mapping
-    id_and_number = pandas.DataFrame.from_dict(data_gen.entity_dict, orient='index')
-
-    # this gives you a dataframe with 2 columns, id and vector
-    id_and_number[0] = id_and_number[0].apply(_get_entity_vec, args=(embeds,))
-
-    id_and_entity_vec = id_and_number
-    id_and_entity_vec.columns = ['vector']
-
-    # this gives you dataframe with 1 + number of dimensions of the vector columns
-    # 1 column for entity's id and the rest of columns are single values in the vectors
-    entity_vecs = id_and_entity_vec.vector.apply(pandas.Series)
-    return entity_vecs
-
-
-def get_embed_weights_from_model(model):
-    for i in model.layers:
-        if '_embedding' in i.name:
-            return i.get_weights()
-    raise ValueError("No embedding layer found. Please set the name property of your embedding layer contain the string '_embedding'")
 
 
 def _name_not_has_vec(name, data_gen):
@@ -348,8 +324,8 @@ def test_model(embedding_model, tasks=TASKS, data_gen=None, truncate=True, embed
         data_gen = training_data_generator.EmbeddingDataGenerator(300, 4)
 
 
-    raw_embeds = get_embed_weights_from_model(embedding_model)
-    embeds = reassociate_embeds_with_ids(raw_embeds, data_gen)
+    raw_embeds = tools.get_embed_weights_from_model(embedding_model)
+    embeds = tools.reassociate_embeds_with_ids(raw_embeds, data_gen)
 
     if 'biz_type' in tasks:
         entities = _get_entities_from_db(handler, '_id')
@@ -367,7 +343,7 @@ def test_embeddings(embeddings, tasks=TASKS, data_gen=None, truncate=True, embed
     if not data_gen:
         data_gen = training_data_generator.EmbeddingDataGenerator(300, 4)
 
-    embeds = reassociate_embeds_with_ids(embeddings, data_gen)
+    embeds = tools.reassociate_embeds_with_ids(embeddings, data_gen)
     if 'biz_type' in tasks:
         entities = _get_entities_from_db(handler, '_id')
     else:
