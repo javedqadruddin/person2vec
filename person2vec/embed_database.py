@@ -1,3 +1,8 @@
+# pass name of database as command line argument and this will create an
+# embedding for each document in the database, using the 'texts' field of each
+# document to create the embeddings. Will then save the embeddings to the
+# documents from whence they were created in the 'embed' field
+
 import sys
 
 from person2vec import data_handler
