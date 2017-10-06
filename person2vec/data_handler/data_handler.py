@@ -33,6 +33,11 @@ class DataHandler(object):
             self.update_entity(query, embed_name, to_store)
 
 
+    # gets embedding for single entity matching the query as a list of floats
+    def get_embedding_for_entity(self, query, embed_name='embed'):
+        return pickle.loads(self.get_entity(query)[embed_name])
+
+
     def create_entity(self, entry):
         try:
             post_id = self.entities_collection.insert_one(entry).inserted_id
