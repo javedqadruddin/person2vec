@@ -364,7 +364,7 @@ def test_embeddings_with_ids(embeds, tasks=TASKS, data_gen=None, truncate=True, 
     else:
         entities = _get_entities_from_db(handler)
 
-    _run_tasks(tasks, entities, embeds, truncate, data_gen)
+    _run_tasks(tasks, entities, embeds, truncate, data_gen, embed_size, callbacks)
 
 
 def _get_word2vec_vector(row, data_gen):
