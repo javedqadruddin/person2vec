@@ -1,4 +1,9 @@
 from pymongo import MongoClient
+from bson.binary import Binary
+import pickle
+from bson.objectid import ObjectId
+from person2vec.utils import tools
+
 
 SETTINGS = {'default_db': 'person2vec_database'}
 
@@ -11,9 +16,21 @@ class DataHandler(object):
         self.entities_collection = self.db.entities
         self.snippets_collection = self.db.snippets
 
+    def _serialize_array_for_mongo(self, array):
+        return Binary(pickle.dumps(array, protocol=2), subtype=128)
+
 
     def get_snippet_index(self):
         return [snippet['_id'] for snippet in self.get_snippet_iterator()]
+
+
+    def save_embeddings_to_db(self, model, data_gen, embed_name='embed'):
+        embeds = tools.get_embed_weights_from_model(model)
+        entity_vecs = tools.reassociate_embeds_as_lists_with_ids(embeds, data_gen)
+        for row in entity_vecs.iterrows():
+            query = {'_id':ObjectId(row[0])}
+            to_store = self._serialize_array_for_mongo(row[1])
+            self.update_entity(query, embed_name, to_store)
 
 
     def create_entity(self, entry):

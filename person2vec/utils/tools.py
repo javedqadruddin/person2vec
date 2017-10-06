@@ -6,7 +6,20 @@ def _get_entity_vec(num, embeds):
     return embeds[0][num]
 
 
-# goes faster if a data generator is passed in because initialization steps can then be skipped
+def reassociate_embeds_as_lists_with_ids(embeds, data_gen):
+    # the numbers that stand for entities that were fed to the embedding layer
+    # entity_dict contains the entity id to number mapping
+    id_and_number = pandas.DataFrame.from_dict(data_gen.entity_dict, orient='index')
+
+    # this gives you a dataframe with 2 columns, id and vector
+    id_and_number[0] = id_and_number[0].apply(_get_entity_vec, args=(embeds,))
+
+    id_and_entity_vec = id_and_number
+    id_and_entity_vec.columns = ['vector']
+
+    return id_and_entity_vec
+
+
 def reassociate_embeds_with_ids(embeds, data_gen):
     # the numbers that stand for entities that were fed to the embedding layer
     # entity_dict contains the entity id to number mapping
