@@ -37,6 +37,9 @@ class DataHandler(object):
     def get_embedding_for_entity(self, query, embed_name='embed'):
         return pickle.loads(self.get_entity(query)[embed_name])
 
+    def get_embeddings_for_entities(self, query, embed_name='embed'):
+        return [pickle.loads(entity[embed_name]) for entity in self.get_entities(query)]
+
 
     def create_entity(self, entry):
         try:

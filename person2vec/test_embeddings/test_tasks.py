@@ -336,7 +336,7 @@ def test_model(embedding_model, tasks=TASKS, data_gen=None, truncate=True, embed
 
 
 # same as test_model but runs on a set of embeddings passed as an array
-def test_embeddings(embeddings, tasks=TASKS, data_gen=None, truncate=True, embed_size=300, db='person2vec_database'):
+def test_embeddings(embeddings, tasks=TASKS, data_gen=None, truncate=True, embed_size=300, db='person2vec_database', callbacks=[]):
     handler = data_handler.DataHandler(db)
 
     # can pass a training_data_generator to save time, but, if none is passed, create one
