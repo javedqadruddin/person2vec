@@ -91,7 +91,7 @@ def run_age_task(entities, embeds, truncate, data_gen, embed_size, callbacks):
     ages = pandas.Series(entities['age'])
     ages_nums = np.array(ages)
 
-    train_data, train_labels, test_data, test_labels = _split_train_test(embeds, ages_nums)
+    train_data, train_labels, test_data, test_labels = _split_train_test(embeds, ages_nums, len(embeds))
 
     # TODO: probably make this a separate model constructor function
     model = Sequential([Dense(1, input_shape=(embed_size,), activation='linear'),])
@@ -160,7 +160,7 @@ def run_gender_task(entities, embeds, truncate, data_gen, embed_size, callbacks)
     genders = pandas.Series(entities['gender'])
     just_binary_genders = np.array(genders)
 
-    train_data, train_labels, test_data, test_labels = _split_train_test(embeds, just_binary_genders)
+    train_data, train_labels, test_data, test_labels = _split_train_test(embeds, just_binary_genders, len(embeds))
 
     # TODO: probably make this a separate model constructor function
     model = Sequential([Dense(1, input_shape=(embed_size,), activation='sigmoid'),])
@@ -188,11 +188,7 @@ def run_occupation_task(entities, embeds, truncate, data_gen, embed_size, callba
 
     one_hot_occupations = entities.values
 
-    num_train_examples = 750
-    train_data = embeds[:num_train_examples].values
-    train_labels = one_hot_occupations[:num_train_examples]
-    test_data = embeds[num_train_examples:].values
-    test_labels = one_hot_occupations[num_train_examples:]
+    train_data, train_labels, test_data, test_labels = _split_train_test(embeds, one_hot_occupations, len(embeds))
 
     # TODO: probably make this a separate model constructor function
     model = Sequential([Dense(4, input_shape=(embed_size,), activation='softmax'),])
