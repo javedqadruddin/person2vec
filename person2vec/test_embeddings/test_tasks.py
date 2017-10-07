@@ -345,7 +345,7 @@ def test_embeddings(embeddings, tasks=TASKS, data_gen=None, truncate=True, embed
     else:
         entities = _get_entities_from_db(handler)
 
-    _run_tasks(tasks, entities, embeds, truncate, data_gen)
+    return _run_tasks(tasks, entities, embeds, truncate, data_gen)
 
 # same as test_model but runs on a set of embeddings passed as a series indexed by _id
 def test_embeddings_with_ids(embeds, tasks=TASKS, data_gen=None, truncate=True, embed_size=300, db='person2vec_database', callbacks=[]):
@@ -360,7 +360,7 @@ def test_embeddings_with_ids(embeds, tasks=TASKS, data_gen=None, truncate=True, 
     else:
         entities = _get_entities_from_db(handler)
 
-    _run_tasks(tasks, entities, embeds, truncate, data_gen, embed_size, callbacks)
+    return _run_tasks(tasks, entities, embeds, truncate, data_gen, embed_size, callbacks)
 
 
 def _get_word2vec_vector(row, data_gen):
