@@ -2,6 +2,7 @@
 # can also run word2vec embeddings against the same tasks
 import pandas
 import numpy as np
+import random
 from datetime import date
 from keras.models import Sequential
 from keras.layers import Dense
@@ -46,12 +47,30 @@ def _align_frames(entities, embeds):
     return entities, embeds
 
 
+#def _split_train_test(embeds, labels, num_examples=1000):
+#    num_train_examples = int(0.75 * num_examples)
+#
+#    train_data = embeds[:num_train_examples].values
+#    train_labels = labels[:num_train_examples]
+#    test_data = embeds[num_train_examples:].values
+#    test_labels = labels[num_train_examples:]
+
+#    return train_data, train_labels, test_data, test_labels
+
 def _split_train_test(embeds, labels, num_examples=1000):
     num_train_examples = int(0.75 * num_examples)
-    train_data = embeds[:num_train_examples].values
-    train_labels = labels[:num_train_examples]
-    test_data = embeds[num_train_examples:].values
-    test_labels = labels[num_train_examples:]
+    labels = np.asarray(labels)
+
+    train_indices = random.sample(range(0, num_examples), num_train_examples)
+    train_data = embeds.values[train_indices]
+    train_labels = labels[train_indices]
+
+    train_indices_set = set(train_indices)
+    all_indices_set = set(range(0,num_examples))
+    test_indices = list(all_indices_set - train_indices_set)
+
+    test_data = embeds.values[test_indices]
+    test_labels = labels[test_indices]
 
     return train_data, train_labels, test_data, test_labels
 
