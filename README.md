@@ -30,7 +30,7 @@ The process may take a while, depending on the size of your database, so give it
 
 If you want a bit more control, you can use the python package to play with the various settings.  To train embeddings in your own python script, the essential pieces you'll need are as follows:
 
-```
+```python
 from person2vec import data_handler
 from person2vec.generators import training_data_generator
 from person2vec.utils import snippet_creator
