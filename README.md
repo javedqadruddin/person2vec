@@ -2,7 +2,7 @@
 
 person2vec will create embeddings to encapsulate text associated with entities you care about. You can then use these embedding vectors for any other machine learning task.
 
-person2vec uses a novel approach for creating text embeddings. You can read more about the approach in my blog post here: [coming soon]
+person2vec uses a novel approach for creating text embeddings. You can read more about the approach in my blog post here: https://blog.insightdatascience.com/entity2vec-dad368c5b830
 
 To use person2vec, you'll first need to create a mongodb database containing information about your entities. In the database entry (document) for each entity of interest, you must include a 'texts' field as an array of strings of text you have about this entity. This 'texts' field is where person2vec will look when it tries to find text from which to create the embeddings.
 
