@@ -11,9 +11,9 @@ def setUp():
     WIKIDATA_TITLE_URL = "https://www.wikidata.org/w/api.php?action=wbgetentities&sites=enwiki&titles=%s&format=json"
     headers = {
         'User-Agent': 'ML project for describing famous people',
-        'From': 'jqjunk@gmail.com'
+        'From': 'aaabbbcccz@gmail.com'
     }
-    r = requests.get(WIKIDATA_TITLE_URL % ('Hillary_Clinton'), headers=headers)
+    r = requests.get(WIKIDATA_TITLE_URL % ('Hillary_Clinton'), headers=headers, verify=False)
     test_input = json.loads(r.text)
     entities_entries = test_input['entities']
     return entities_entries[entities_entries.keys()[0]]
